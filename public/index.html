@@ -3,260 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORA LIFE - Découvre ton âge biologique réel</title>
-    
-    <!-- CSS externe -->
+    <title>ORA LIFE - Découvre Ton Score de Vieillissement</title>
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
     <!-- Meta SEO -->
-    <meta name="description" content="Test gratuit en 2 minutes. Découvre si ton corps vieillit trop vite et comment inverser la tendance.">
-    <meta property="og:title" content="ORA LIFE - Ton âge biologique">
-    <meta property="og:description" content="93% des gens vieillissent 2x plus vite sans le savoir. Et toi ?">
+    <meta name="description" content="Test scientifique gratuit en 3 minutes. 93% des 35-50 ans vieillissent 2x plus vite sans le savoir.">
+    <meta property="og:title" content="ORA LIFE - Découvre Ton Score de Vieillissement">
+    <meta property="og:description" content="Test gratuit basé sur 1200+ études scientifiques. Obtiens ton protocole personnalisé.">
     <meta property="og:image" content="https://oralife.club/og-image.jpg">
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==">
 </head>
 <body>
+    <!-- Header avec progression -->
+    <div class="quiz-header">
+        <div class="header-content">
+            <div class="logo-text">ORA LIFE</div>
+            <div class="progress-info">
+                <span id="progress-text">Prêt à commencer</span>
+            </div>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <!-- Container principal -->
     <div class="container">
-        <!-- Header -->
-        <div class="quiz-header">
-            <h1 class="quiz-title">ORA LIFE</h1>
-            <p class="quiz-subtitle">Découvre ton âge biologique en 2 minutes</p>
-            <div class="progress-container">
-                <div class="progress-segments" id="progressSegments"></div>
-                <div class="progress-text" id="progressText">Prêt à commencer</div>
-            </div>
-        </div>
-
-        <!-- Écran d'intro -->
-        <div class="value-page active" id="introPage">
-            <div class="value-icon">🚀</div>
-            <h2 class="value-title">Prêt à découvrir la vérité sur ton corps ?</h2>
-            <div class="value-content">
-                <span class="value-highlight">93% des gens</span> vieillissent plus vite que leur âge réel sans le savoir.<br><br>
-                Ce test basé sur <span class="value-highlight">1200+ études scientifiques</span> va révéler ton vrai âge biologique et comment l'optimiser.
-            </div>
-            <div class="navigation">
-                <button class="btn btn-primary" onclick="startQuiz()">Commencer le test →</button>
-            </div>
-        </div>
-
-        <!-- Container pour les questions (générées dynamiquement) -->
-        <div id="questionsContainer"></div>
-
-        <!-- Wow Break 1 : La chaise qui tue -->
-        <div class="wow-break" id="wowBreak1">
-            <div class="wow-card">
-                <div class="wow-emoji">🪑</div>
-                <h2 class="wow-title">LA CHAISE QUI TUE</h2>
-                <div class="wow-stat">+34%</div>
-                <p class="wow-description">de mortalité après 10h assis par jour<br><strong>MÊME avec du sport régulier</strong></p>
-                <div class="wow-graph">
-                    <div class="graph-bars">
-                        <div class="bar" style="height: 50%;">
-                            <span class="bar-label">4h</span>
-                            <span class="bar-value">Normal</span>
-                        </div>
-                        <div class="bar" style="height: 75%;">
-                            <span class="bar-label">8h</span>
-                            <span class="bar-value">+15%</span>
-                        </div>
-                        <div class="bar" style="height: 100%;">
-                            <span class="bar-label">10h+</span>
-                            <span class="bar-value">+34%</span>
-                        </div>
-                    </div>
-                </div>
-                <p class="wow-subdescription">
-                    Sans sport : +52% de mortalité<br>
-                    Solution : Pause active toutes les heures
-                </p>
-                <span class="wow-source">📊 Medicine & Science in Sports & Exercise (2019)</span>
-                <div class="navigation">
-                    <button class="btn btn-primary" onclick="continueFromWow(1)">Continuer l'analyse →</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Wow Break 2 : L'inégalité face à la mort -->
-        <div class="wow-break" id="wowBreak2">
-            <div class="wow-card">
-                <div class="wow-emoji">⚖️</div>
-                <h2 class="wow-title">L'INÉGALITÉ FACE À LA MORT</h2>
-                <div class="wow-stat">6.8 ans</div>
-                <p class="wow-description">d'écart d'espérance de vie selon ta catégorie sociale</p>
-                <div class="wow-graph">
-                    <div class="life-expectancy-chart">
-                        <div class="chart-item">
-                            <strong>👔 Cadres supérieurs :</strong> 84.4 ans
-                        </div>
-                        <div class="chart-item">
-                            <strong>💼 Professions intermédiaires :</strong> 82 ans
-                        </div>
-                        <div class="chart-item">
-                            <strong>🔧 Ouvriers :</strong> 77.6 ans
-                        </div>
-                    </div>
-                </div>
-                <div class="wow-factors">
-                    <strong>Pourquoi cette différence ?</strong>
-                    <ul>
-                        <li>Stress chronique vs stress physique</li>
-                        <li>Accès aux soins et prévention</li>
-                        <li>Conditions de travail</li>
-                        <li>Connaissances santé</li>
-                    </ul>
-                </div>
-                <span class="wow-source">📊 INSEE 2023 - Espérance de vie par CSP</span>
-                <div class="navigation">
-                    <button class="btn btn-primary" onclick="continueFromWow(2)">Continuer l'analyse →</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Wow Break 3 : Tu contrôles ton destin (NOUVELLE VERSION 7%) -->
-        <div class="wow-break" id="wowBreak3">
-            <div class="wow-card">
-                <div class="wow-emoji">🧬</div>
-                <h2 class="wow-title">LA GÉNÉTIQUE ? PRESQUE RIEN !</h2>
-                <div class="genetics-display">
-                    <div class="genetics-part">
-                        <div class="wow-stat small">7%</div>
-                        <p>Génétique</p>
-                    </div>
-                    <div class="genetics-part">
-                        <div class="wow-stat big">93%</div>
-                        <p>Tes choix quotidiens</p>
-                    </div>
-                </div>
-                <p class="wow-description">
-                    <strong>"La génétique n'explique qu'environ 7% de la longévité.<br>
-                    Le reste se gagne au quotidien."</strong><br><br>
-                    Étude sur 400 millions de profils généalogiques :<br>
-                    L'héritabilité réelle de la durée de vie est minime.<br>
-                    <em>Tu es le maître de ton destin biologique.</em>
-                </p>
-                <span class="wow-source">📊 Ruby et al., Genetics, 2018 - PMC6661543</span>
-                <div class="navigation">
-                    <button class="btn btn-primary" onclick="continueFromWow(3)">Terminer l'analyse →</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Page milieu -->
-        <div class="value-page" id="midPage">
-            <div class="value-icon">⚡</div>
-            <h2 class="value-title">Tu progresses bien !</h2>
-            <div class="value-content">
-                Déjà <span class="value-highlight">50% complété</span> !<br><br>
-                Les prochaines questions vont déterminer <span class="value-highlight">ton profil précis</span> et tes axes d'amélioration prioritaires.
-            </div>
-            <div class="navigation">
-                <button class="btn btn-primary" onclick="continueMidQuiz()">Continuer →</button>
-            </div>
-        </div>
-
-        <!-- Moment de vérité -->
-        <div class="value-page" id="truthMoment">
-            <div class="value-icon">⏰</div>
-            <h2 class="value-title">LE MOMENT DE VÉRITÉ</h2>
-            <div class="value-content">
-                <div id="countdown" class="countdown">3</div>
-                Dans quelques secondes, découvre ton vrai potentiel...
-            </div>
-        </div>
-
-        <!-- Formulaire de contact -->
-        <div class="question-container" id="contactForm">
-            <div class="question-header">
-                <div class="question-number">Dernière étape</div>
-                <h2 class="question-title">Obtiens ton diagnostic personnalisé</h2>
-                <p class="question-subtitle">Reçois ton protocole complet gratuit</p>
-            </div>
-            <div class="contact-form">
-                <div class="input-group">
-                    <label for="prenom">Prénom *</label>
-                    <input type="text" id="prenom" name="prenom" placeholder="Ton prénom" required>
-                </div>
-                <div class="input-group">
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" placeholder="ton@email.com" required>
-                </div>
-                <div class="input-group">
-                    <label for="mobile">Mobile (optionnel)</label>
-                    <input type="tel" id="mobile" name="mobile" placeholder="+33 6 12 34 56 78">
-                </div>
-                <div class="navigation">
-                    <button class="btn btn-secondary" onclick="previousStep()">← Retour</button>
-                    <button class="btn btn-primary" onclick="submitForm()">Obtenir mon diagnostic →</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <h2 class="loading-text">Analyse de tes réponses...</h2>
-            <p class="loading-subtext">Calcul de ton âge biologique personnalisé</p>
-            <div class="loading-steps">
-                <div class="loading-step" id="step1">
-                    <div class="loading-step-icon">1</div>
-                    <span>Analyse de tes habitudes de vie</span>
-                </div>
-                <div class="loading-step" id="step2">
-                    <div class="loading-step-icon">2</div>
-                    <span>Comparaison avec 1200+ études</span>
-                </div>
-                <div class="loading-step" id="step3">
-                    <div class="loading-step-icon">3</div>
-                    <span>Création de ton protocole</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Résultats -->
-        <div class="results-container" id="results">
-            <div class="result-header">
-                <h2 class="result-title">TON DIAGNOSTIC PERSONNALISÉ</h2>
-            </div>
-            
-            <!-- Bloc âge biologique -->
-            <div class="age-comparison">
-                <div class="age-actual">Ton âge chronologique : <span id="realAge">43</span> ans</div>
-                <div class="age-biological" id="bioAge">48 ans</div>
-                <div class="age-difference">
-                    <div class="age-warning" id="ageWarning">⚠️ Tu vieillis trop vite</div>
-                    <p id="ageDiffText">Ton corps a <strong>5 ans</strong> d'avance sur ton âge réel</p>
-                </div>
-            </div>
-
-            <!-- Facteurs de vieillissement -->
-            <div class="aging-factors" id="agingFactors">
-                <h3 class="factors-title">3 COUPABLES IDENTIFIÉS</h3>
-                <!-- Généré dynamiquement par JS -->
-            </div>
-
-            <!-- Potentiel de récupération -->
-            <div class="recovery-potential" id="recoveryPotential">
-                <h3 class="recovery-title">✨ MAIS TU PEUX RÉCUPÉRER</h3>
-                <div class="recovery-stat">CES 5 ANS PERDUS</div>
-                <p class="recovery-description">
-                    + EN GAGNER 3 DE PLUS<br><br>
-                    Les bonnes habitudes peuvent te faire gagner<br>
-                    <strong>8 ans de vie en pleine forme</strong>
-                </p>
-            </div>
-
-            <!-- CTA final -->
-            <div class="cta-section">
-                <a href="#" class="cta-button" onclick="getProtocol()">OBTENIR MON PROTOCOLE GRATUIT →</a>
-            </div>
+        <div id="quiz-container">
+            <!-- Le contenu du quiz sera injecté ici -->
         </div>
     </div>
 
