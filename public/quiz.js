@@ -128,6 +128,18 @@ const Quiz = (function() {
             type: 'single'
         },
         {
+    id: 'infections_frequency',
+    text: 'Tu attrapes des rhumes/grippes ou infections :',
+    options: [
+        'Jamais (système immunitaire de warrior)',
+        'Rarement (1 fois/an max)',
+        'Normalement (2-3 fois/an)',
+        'Souvent (4-5 fois/an)',
+        'Tout le temps (système immunitaire KO)'
+    ],
+    type: 'single'
+},
+        {
             id: 'stress_level',
             text: 'Ton niveau de stress :',
             options: ['Zen permanent', 'Gérable', 'Élevé', 'Très élevé', 'Burnout proche'],
@@ -872,3 +884,4 @@ const Quiz = (function() {
 document.addEventListener('DOMContentLoaded', function() {
     Quiz.init();
 });
+
