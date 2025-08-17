@@ -16,23 +16,21 @@ export default function handler(req, res) {
     const { answers } = req.body;
     
     // SCORING SCIENTIFIQUE PONDÉRÉ BASÉ SUR LA LITTÉRATURE
-    // Poids basés sur impact mortalité/longévité
-    
     const scoringWeights = {
-        // TIER 1 - IMPACT MAXIMAL (Facteurs qui impactent >20% mortalité)
+        // TIER 1 - IMPACT MAXIMAL (>20% mortalité)
         alcohol: {
             '0 (jamais)': 30,
-            '1-3 verres': 22,
-            '4-7 verres (1/jour)': 15,
+            '1-3 verres': 24,
+            '4-7 verres (1/jour)': 16,
             '8-14 verres (2/jour)': 8,
             '15+ verres': 0
         },
         
         sleep_quality: {
             '7-9h de sommeil profond': 30,
-            '7-9h avec réveils': 22,
-            '5-7h agité': 12,
-            'Moins de 5h': 3,
+            '7-9h avec réveils': 23,
+            '5-7h agité': 15,
+            'Moins de 5h': 5,
             'Insomnie chronique': 0
         },
         
@@ -73,8 +71,7 @@ export default function handler(req, res) {
             'Protéines + bons gras': 20,
             'Équilibré varié': 15,
             'Sucré (pain blanc, confiture)': 8,
-            'Juste café/rien': 5,
-            'Variable selon l\'humeur': 10
+            'Juste café/rien': 5
         },
         
         infections_frequency: {
@@ -82,7 +79,7 @@ export default function handler(req, res) {
             'Rarement (1 fois/an max)': 16,
             'Normalement (2-3 fois/an)': 12,
             'Souvent (4-5 fois/an)': 6,
-            'Tout le temps (système immunitaire KO)': 0
+            'Tout le temps (système KO)': 0
         },
         
         // TIER 3 - IMPACT MODÉRÉ (5-10% mortalité)
@@ -99,11 +96,11 @@ export default function handler(req, res) {
             '24-48h': 11,
             '48-72h': 7,
             'Plus de 72h': 3,
-            'Je ne récupère jamais': 0
+            'Je ne récupère jamais vraiment': 0
         },
         
         sun_exposure: {
-            'Quotidienne (>30min)': 15,
+            'Quotidienne >30min': 15,
             'Quelques fois/semaine': 11,
             'Weekends seulement': 8,
             'Rarement': 4,
@@ -118,13 +115,37 @@ export default function handler(req, res) {
             'Zéro nature': 0
         },
         
+        night_wakeups: {
+            'Jamais': 15,
+            '1 fois': 11,
+            '2-3 fois': 7,
+            '4+ fois': 3,
+            'Insomnie chronique': 0
+        },
+        
+        bedtime: {
+            'Avant 22h': 15,
+            '22h-23h': 12,
+            '23h-minuit': 8,
+            'Après minuit': 4,
+            'Horaires chaotiques': 0
+        },
+        
+        screen_before_bed: {
+            'Jamais (coupure 2h avant)': 15,
+            '30min avant': 12,
+            '1h avant': 9,
+            'Jusqu\'au coucher': 5,
+            'Dans le lit': 0
+        },
+        
         // TIER 4 - IMPACT LÉGER (<5% mortalité)
         skin_quality: {
             'Éclatante': 10,
             'Correcte pour mon âge': 8,
             'Terne/sèche': 5,
             'Problématique': 3,
-            'Vieillissement accéléré': 0
+            'Vieillissement accéléré visible': 0
         },
         
         social_relations: {
@@ -136,7 +157,7 @@ export default function handler(req, res) {
         },
         
         memory_focus: {
-            'Excellent': 10,
+            'Excellents': 10,
             'Quelques oublis mineurs': 8,
             'Difficultés fréquentes': 5,
             'Brouillard mental': 2,
@@ -145,39 +166,50 @@ export default function handler(req, res) {
         
         joint_pain: {
             'Jamais': 10,
-            'Après effort intense': 8,
+            'Après effort intense seulement': 8,
             'Régulièrement': 5,
             'Chroniques': 2,
             'Handicapantes': 0
+        },
+        
+        last_vacation: {
+            'Il y a moins de 3 mois': 10,
+            '3-6 mois': 8,
+            '6-12 mois': 5,
+            'Plus d\'1 an': 3,
+            'Je ne prends jamais de vacances': 0
+        },
+        
+        environment: {
+            'Campagne/nature': 10,
+            'Petite ville (<50k hab)': 8,
+            'Grande ville': 5,
+            'Mégapole': 3,
+            'Zone très polluée': 0
         }
     };
     
-    // BONUS/MALUS basés sur l'âge et le genre
-    const ageBonus = {
-        '18-25': 5,
-        '26-35': 3,
-        '36-45': 0,
-        '46-55': -3,
-        '56+': -5
-    };
-    
-    // Calculer le score
+    // Calcul du score
     let totalScore = 0;
     let maxScore = 0;
     let categoryScores = {};
     
     // Score par catégorie
     Object.entries(answers).forEach(([key, value]) => {
-        if (scoringWeights[key] && scoringWeights[key][value]) {
-            totalScore += scoringWeights[key][value];
-            categoryScores[key] = scoringWeights[key][value];
-        }
         if (scoringWeights[key]) {
+            // Pour les réponses simples
+            if (typeof value === 'string') {
+                if (scoringWeights[key][value] !== undefined) {
+                    totalScore += scoringWeights[key][value];
+                    categoryScores[key] = scoringWeights[key][value];
+                }
+            }
+            // Calculer le max possible
             maxScore += Math.max(...Object.values(scoringWeights[key]));
         }
     });
     
-    // Ajuster selon l'âge
+    // Bonus/malus selon l'âge
     const age = parseInt(answers.age);
     if (age) {
         if (age < 26) totalScore += 5;
@@ -185,14 +217,16 @@ export default function handler(req, res) {
         else if (age < 46) totalScore += 0;
         else if (age < 56) totalScore -= 3;
         else totalScore -= 5;
+        maxScore += 5;
     }
     
     // Bonus femme enceinte
     if (answers.cycle_libido === 'Grossesse') {
-        totalScore += 10; // Bonus car besoins spécifiques
+        totalScore += 10;
+        maxScore += 10;
     }
     
-    // Calculer l'IMC et ajuster
+    // Calcul IMC et ajustement
     if (answers.weight && answers.height) {
         const imc = answers.weight / ((answers.height/100) * (answers.height/100));
         if (imc >= 18.5 && imc <= 25) {
@@ -205,10 +239,25 @@ export default function handler(req, res) {
         maxScore += 10;
     }
     
+    // Bonus pour bonnes habitudes multiples (synergies)
+    let goodHabits = 0;
+    if (answers.sport_frequency === '5+ fois' || answers.sport_frequency === '3-4 fois') goodHabits++;
+    if (answers.sleep_quality === '7-9h de sommeil profond') goodHabits++;
+    if (answers.alcohol === '0 (jamais)' || answers.alcohol === '1-3 verres') goodHabits++;
+    if (answers.hydration === '2L+ religieusement') goodHabits++;
+    
+    if (goodHabits >= 4) {
+        totalScore += 15; // Bonus synergie
+        maxScore += 15;
+    } else if (goodHabits >= 3) {
+        totalScore += 10;
+        maxScore += 15;
+    }
+    
     // Score final sur 100
     const finalScore = Math.round((totalScore / maxScore) * 100);
     
-    // Identifier les 3 priorités (les catégories avec les plus bas scores)
+    // Identifier les 3 priorités
     const priorities = [];
     const categoryPercentages = {};
     
@@ -225,20 +274,20 @@ export default function handler(req, res) {
         .sort((a, b) => a[1].percentage - b[1].percentage)
         .slice(0, 3);
     
-    // Créer les recommandations
+    // Recommandations
     const recommendations = {
-        alcohol: 'Alcool : Réduire à 0-3 verres/semaine max',
-        sleep_quality: 'Sommeil : Viser 7-9h de qualité chaque nuit',
-        sport_frequency: 'Sport : Minimum 3x/semaine, idéal 5x',
-        sitting_hours: 'Sédentarité : Pause active toutes les heures',
-        stress_level: 'Stress : Méditation 10min/jour minimum',
-        hydration: 'Hydratation : 2.5L d\'eau pure quotidiennement',
-        breakfast: 'Nutrition : Petit-déj protéiné obligatoire',
-        infections_frequency: 'Immunité : Protocole vitamine D + zinc',
-        digestion: 'Digestion : Probiotiques + fibres',
-        recovery: 'Récupération : Magnésium + étirements',
-        sun_exposure: 'Soleil : 20min/jour minimum (matin idéal)',
-        nature_time: 'Nature : 5h/semaine minimum'
+        alcohol: 'Alcool : Réduire à 0-3 verres/semaine maximum',
+        sleep_quality: 'Sommeil : Protocole 7-9h de qualité (magnésium glycinate 400mg)',
+        sport_frequency: 'Sport : Minimum 3x/semaine HIIT 20min',
+        sitting_hours: 'Sédentarité : Timer 50min = 10min debout/marche',
+        stress_level: 'Stress : HRV training 5min matin + soir',
+        hydration: 'Hydratation : 35ml/kg poids corporel d\'eau pure',
+        breakfast: 'Nutrition : 30g protéines dans les 30min du réveil',
+        infections_frequency: 'Immunité : Vitamine D 4000UI + Zinc 15mg/jour',
+        digestion: 'Microbiome : Probiotiques 50 milliards CFU + fibres 35g/jour',
+        recovery: 'Récupération : Sauna 20min 3x/semaine + douche froide',
+        sun_exposure: 'Lumière : 10min soleil matin sans lunettes',
+        nature_time: 'Nature : Earthing 20min pieds nus/jour'
     };
     
     sorted.forEach(([key, data]) => {
@@ -268,15 +317,16 @@ export default function handler(req, res) {
         level = 'Critique';
     }
     
-    // Calcul de l'âge biologique estimé
-    const biologicalAge = age + Math.round((100 - finalScore) / 10) - 5;
+    // Estimation âge biologique
+    const agePenalty = Math.round((100 - finalScore) / 10);
+    const biologicalAge = age + agePenalty - 5;
     
     return res.status(200).json({
         score: finalScore,
         message: message,
         level: level,
         priorities: priorities,
-        biologicalAge: biologicalAge,
+        biologicalAge: Math.max(18, biologicalAge), // Minimum 18 ans
         categoryScores: categoryPercentages
     });
 }
