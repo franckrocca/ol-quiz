@@ -1,18 +1,24 @@
 {
   "name": "ol-quiz",
   "version": "1.0.0",
-  "description": "ORA LIFE Quiz - Score de Vitalité",
+  "description": "OraLife Quiz - Score de Vitalité",
+  "main": "index.html",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev",
+    "build": "echo 'No build needed'",
     "deploy": "vercel --prod"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/franckmoi/ol-quiz.git"
-  },
-  "author": "Franck Rocca",
+  "keywords": [
+    "biohacking",
+    "health",
+    "quiz",
+    "biological-age",
+    "oralife"
+  ],
+  "author": "OraLife",
   "license": "MIT",
-  "devDependencies": {
-    "vercel": "^32.0.0"
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
