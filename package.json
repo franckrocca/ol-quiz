@@ -1,0 +1,18 @@
+{
+  "name": "ol-quiz",
+  "version": "1.0.0",
+  "description": "ORA LIFE Quiz - Score de Vitalité",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/franckmoi/ol-quiz.git"
+  },
+  "author": "Franck Rocca",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}
