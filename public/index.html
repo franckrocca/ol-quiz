@@ -14,31 +14,29 @@
     <meta property="og:description" content="Test gratuit basé sur 1200+ études scientifiques. Obtiens ton protocole personnalisé.">
     <meta property="og:image" content="https://oralife.club/og-image.jpg">
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==">
+    <!-- Favicon vert fluo -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2301FF00'/%3E%3C/svg%3E">
 </head>
 <body>
     <!-- Header avec progression -->
     <div class="quiz-header">
         <div class="header-content">
-            <div class="logo-text">ORA LIFE</div>
+            <div class="logo-text">ORA <span class="logo-accent">LIFE</span></div>
             <div class="progress-info">
-                <span id="progress-text">Prêt à commencer</span>
+                <span id="progress-text">Découvre de ton profil...</span>
             </div>
         </div>
         <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
             <div class="progress-segments">
-                <div class="progress-segment" id="segment-1">
-                    <div class="segment-fill"></div>
-                    <div class="segment-check">✓</div>
+                <div class="segment-marker" style="left: 33%;">
+                    <div class="segment-check" id="check1">✓</div>
                 </div>
-                <div class="progress-segment" id="segment-2">
-                    <div class="segment-fill"></div>
-                    <div class="segment-check">✓</div>
+                <div class="segment-marker" style="left: 66%;">
+                    <div class="segment-check" id="check2">✓</div>
                 </div>
-                <div class="progress-segment" id="segment-3">
-                    <div class="segment-fill"></div>
-                    <div class="segment-check">✓</div>
+                <div class="segment-marker" style="left: 100%;">
+                    <div class="segment-check" id="check3">✓</div>
                 </div>
             </div>
         </div>
