@@ -1,4 +1,4 @@
-// ORA LIFE Quiz Engine - Version Finale
+// ORA LIFE Quiz Engine - Version Complète
 const Quiz = (function() {
     'use strict';
     
@@ -7,1019 +7,607 @@ const Quiz = (function() {
     const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwjyAjH9Nl6y2IeRWHi5Qrr6ftqVilH4T9RMPAdNXM_XYVuaN0WFzrPPYwVL8oOZR0W/exec';
     
     // État global
-    let currentScreen = -1; // -1 = landing
-    let currentQuestionIndex = 0;
+    let currentStep = 0;
     let answers = {};
     let userInfo = {};
-    let multiAnswers = {};
+    let multiSelections = {};
     
-    // Mapping des écrans avec wow breaks
-    const screenFlow = [
-        'landing',
-        'q-0', 'q-1', 'q-2-3', 'q-4', 'q-5', 'q-6', 'q-7', 'q-8', 'q-9',
-        'wow-1', // Après heures assis
-        'q-10', 'q-11', 'q-12', 'q-13', 'q-14', 'q-15',
-        'wow-2', // Après digestion  
-        'q-16', 'q-17', 'q-18', 'q-19', 'q-20', 'q-21', 'q-22', 'q-23',
-        'wow-3', // Génétique 7%
-        'q-24', 'q-25', 'q-26', 'q-27', 'q-28', 'q-29',
-        'wow-4', // Après alcool
-        'q-30', 'q-31', 'q-32', 'q-33',
-        'wow-5', // Après tracking
-        'q-34', 'q-35', 'q-36', 'q-37',
-        'wow-6', // Après projection
-        'q-38', 'q-39', 'q-40', 'q-41',
-        'wow-7', // Final
-        'email', 'calculating', 'results'
-    ];
-    
-    // Questions complètes basées sur index9
+    // Questions complètes
     const questions = [
-        { 
-            id: 'gender', 
-            text: 'Tu es ?', 
-            options: ['Homme', 'Femme'], 
-            type: 'visual' 
-        },
-        { 
-            id: 'age', 
-            text: 'Ton âge exact ?', 
-            type: 'number', 
-            min: 18, 
-            max: 100,
-            placeholder: '42'
-        },
-        { 
-            id: 'weight_height', 
-            text: 'Ton poids et ta taille ?',
-            type: 'dual_number',
-            fields: [
-                { id: 'weight', label: 'Poids (kg)', min: 40, max: 200, placeholder: '75' },
-                { id: 'height', label: 'Taille (cm)', min: 140, max: 220, placeholder: '175' }
-            ]
-        },
-        {
-            id: 'objectives',
-            text: 'Tes objectifs principaux ?',
-            options: [
-                'Énergie illimitée toute la journée',
-                'Sommeil réparateur profond',
-                'Mental sharp & focus laser',
-                'Perte de poids durable',
-                'Longévité & anti-âge',
-                'Performance sportive',
-                'Équilibre hormonal'
-            ],
-            type: 'multi',
-            max: 3
-        },
-        {
-            id: 'energy_vs_3years',
-            text: 'Ton énergie vs il y a 3 ans ?',
-            options: [
-                'Débordante, mieux qu\'avant !',
-                'Identique',
-                'En baisse',
-                'Fatigue chronique'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'last_100_percent',
-            text: 'Dernière fois à 100% de ta forme ?',
-            options: [
-                'Cette semaine',
-                'Ce mois-ci',
-                'Il y a 6 mois',
-                'Il y a 1 an',
-                'Plus de 2 ans',
-                'Jamais vraiment'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'sitting_hours',
-            text: 'Heures assis par jour ?',
-            options: [
-                'Moins de 4h',
-                '4-6h',
-                '6-8h',
-                '8-10h',
-                'Plus de 10h'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'back_pain',
-            text: 'Douleurs dos/cervicales ?',
-            options: [
-                'Jamais',
-                'Parfois',
-                'Souvent',
-                'Tous les jours'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'screen_eyes',
-            text: 'Yeux fatigués/secs le soir ?',
-            options: [
-                'Jamais',
-                'Parfois',
-                'Souvent',
-                'Toujours'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'last_blood_test',
-            text: 'Dernière prise de sang complète ?',
-            options: [
-                'Moins de 6 mois',
-                '6-12 mois',
-                '1-2 ans',
-                'Plus de 2 ans',
-                'Jamais'
-            ],
-            type: 'single'
-        },
-        // WOW BREAK 1 - La chaise qui tue
-        {
-            id: 'sport_frequency',
-            text: 'Fréquence sport/semaine ?',
-            options: [
-                '5+ fois',
-                '3-4 fois',
-                '2-3 fois',
-                '1 fois',
-                'Jamais'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'sport_type',
-            text: 'Type d\'activité principale ?',
-            options: [
-                'HIIT/CrossFit',
-                'Musculation',
-                'Course/Cardio',
-                'Yoga/Pilates',
-                'Sports collectifs',
-                'Marche',
-                'Aucune'
-            ],
-            type: 'multi',
-            max: 'unlimited'
-        },
-        {
-            id: 'recovery_time',
-            text: 'Récupération après effort ?',
-            options: [
-                '< 24h',
-                '24-48h',
-                '2-3 jours',
-                '> 3 jours'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'breakfast',
-            text: 'Petit-déjeuner type ?',
-            options: [
-                'Protéiné (œufs, viande)',
-                'Glucides (pain, céréales)',
-                'Jeûne intermittent',
-                'Café seulement',
-                'Variable'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'meals_per_day',
-            text: 'Nombre de repas/jour ?',
-            options: [
-                '1-2 repas',
-                '3 repas',
-                '3 repas + collations',
-                'Grignotage continu'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'digestion',
-            text: 'Qualité digestion ?',
-            options: [
-                'Parfaite',
-                'Bonne',
-                'Ballonnements fréquents',
-                'Problèmes chroniques'
-            ],
-            type: 'single'
-        },
-        // WOW BREAK 2 - L'inégalité face à la mort
-        {
-            id: 'hydration',
-            text: 'Consommation d\'eau/jour ?',
-            options: [
-                '2L+ religieusement',
-                '1.5-2L',
-                '1-1.5L',
-                'Moins d\'1L',
-                'Principalement café/sodas'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'alcohol',
-            text: 'Verres d\'alcool/semaine ?',
-            options: [
-                '0 (jamais)',
-                '1-3 verres',
-                '4-7 verres (1/jour)',
-                '8-14 verres (2/jour)',
-                '15+ verres'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'smoking',
-            text: 'Tabac/Nicotine ?',
-            options: [
-                'Jamais',
-                'Occasionnel',
-                'Vapotage',
-                'Quotidien'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'supplements',
-            text: 'Compléments actuels ?',
-            options: [
-                'Vitamine D',
-                'Magnésium',
-                'Oméga-3',
-                'Probiotiques',
-                'Multivitamines',
-                'Protéines',
-                'Créatine',
-                'Aucun'
-            ],
-            type: 'multi',
-            max: 'unlimited'
-        },
-        {
-            id: 'sleep_hours',
-            text: 'Heures de sommeil/nuit ?',
-            options: [
-                '7-9h de sommeil profond',
-                '7-9h avec réveils',
-                '5-7h agité',
-                'Moins de 5h',
-                'Insomnie chronique'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'sleep_quality',
-            text: 'Te réveilles-tu reposé ?',
-            options: [
-                'Toujours en forme',
-                'Plutôt bien',
-                'Fatigué',
-                'Épuisé'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'sleep_schedule',
-            text: 'Heure coucher habituelle ?',
-            options: [
-                'Avant 22h',
-                '22h-23h',
-                '23h-00h',
-                'Après minuit',
-                'Variable'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'screen_before_bed',
-            text: 'Écrans avant dormir ?',
-            options: [
-                'Jamais',
-                '30min avant',
-                '1h avant',
-                'Jusqu\'au coucher'
-            ],
-            type: 'single'
-        },
-        // WOW BREAK 3 - Génétique 7%
-        {
-            id: 'stress_level',
-            text: 'Niveau de stress quotidien ?',
-            options: [
-                'Zen permanent',
-                'Gérable',
-                'Élevé',
-                'Très élevé',
-                'Burnout proche'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'stress_management',
-            text: 'Gestion du stress ?',
-            options: [
-                'Méditation quotidienne',
-                'Sport',
-                'Respiration',
-                'Rien de structuré',
-                'Alcool/Netflix'
-            ],
-            type: 'multi',
-            max: 'unlimited'
-        },
-        {
-            id: 'libido',
-            text: 'Libido actuelle vs optimal ?',
-            options: [
-                '100% au top',
-                '75% correct',
-                '50% en baisse',
-                '25% problématique',
-                'Inexistante'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'erection_orgasm',
-            text: 'Qualité érection/orgasme ?',
-            options: [
-                'Excellente',
-                'Bonne',
-                'Variable',
-                'Difficultés fréquentes',
-                'Problématique'
-            ],
-            type: 'single',
-            conditional: true
-        },
-        {
-            id: 'cycle_libido',
-            text: 'Impact cycle sur libido/énergie ?',
-            options: [
-                'Aucun impact',
-                'Légères variations',
-                'Impact modéré',
-                'Fort impact',
-                'Ménopause'
-            ],
-            type: 'single',
-            conditional: true
-        },
-        {
-            id: 'focus_concentration',
-            text: 'Capacité de concentration ?',
-            options: [
-                'Focus laser 4h+',
-                '2-4h productives',
-                '1-2h max',
-                'Difficultés constantes',
-                'Brain fog permanent'
-            ],
-            type: 'single'
-        },
-        // WOW BREAK 4
-        {
-            id: 'memory',
-            text: 'Ta mémoire actuelle ?',
-            options: [
-                'Excellente',
-                'Bonne',
-                'Quelques oublis',
-                'Oublis fréquents',
-                'Problématique'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'creativity',
-            text: 'Créativité/Innovation ?',
-            options: [
-                'Débordante',
-                'Bonne',
-                'En baisse',
-                'Bloquée'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'mood',
-            text: 'Humeur générale ?',
-            options: [
-                'Excellent moral',
-                'Plutôt positif',
-                'Variable',
-                'Souvent négatif',
-                'Déprimé'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'social_energy',
-            text: 'Énergie sociale ?',
-            options: [
-                'Très sociable',
-                'Normal',
-                'Fatigue sociale',
-                'Isolement'
-            ],
-            type: 'single'
-        },
-        // WOW BREAK 5
-        {
-            id: 'sun_exposure',
-            text: 'Exposition soleil/jour ?',
-            options: [
-                '2h+ direct',
-                '30min-2h',
-                '10-30min',
-                'Quasi jamais'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'nature_time',
-            text: 'Temps en nature/semaine ?',
-            options: [
-                'Quotidien',
-                '3-4 fois',
-                '1-2 fois',
-                'Jamais'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'cold_exposure',
-            text: 'Exposition au froid ?',
-            options: [
-                'Douche froide quotidienne',
-                'Occasionnelle',
-                'Jamais',
-                'Bain glacé/cryothérapie'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'sauna_heat',
-            text: 'Sauna/chaleur ?',
-            options: [
-                '3+ fois/semaine',
-                '1-2 fois/semaine',
-                'Occasionnel',
-                'Jamais'
-            ],
-            type: 'single'
-        },
-        // WOW BREAK 6
-        {
-            id: 'tracking',
-            text: 'Outils de tracking ?',
-            options: [
-                'Oura Ring',
-                'Apple Watch',
-                'Garmin',
-                'Whoop',
-                'Fitbit',
-                'Aucun'
-            ],
-            type: 'multi',
-            max: 'unlimited'
-        },
-        {
-            id: 'blood_tests_frequency',
-            text: 'Analyses sang préventives ?',
-            options: [
-                'Tous les 3 mois',
-                'Tous les 6 mois',
-                '1 fois/an',
-                'Jamais'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'biohacking_experience',
-            text: 'Expérience biohacking ?',
-            options: [
-                'Expert (3+ ans)',
-                'Intermédiaire (1-3 ans)',
-                'Débutant (<1 an)',
-                'Curieux',
-                'Aucune'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'investment_health',
-            text: 'Budget santé/mois ?',
-            options: [
-                '500€+',
-                '200-500€',
-                '100-200€',
-                '50-100€',
-                '<50€'
-            ],
-            type: 'single'
-        },
-        // WOW BREAK 7
-        {
-            id: 'projection_3years',
-            text: 'Dans 3 ans, tu te vois ?',
-            options: [
-                'Au top de ma forme',
-                'Stable',
-                'En déclin',
-                'Inquiet pour ma santé'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'motivation',
-            text: 'Ta motivation principale ?',
-            options: [
-                'Voir mes enfants/petits-enfants grandir',
-                'Rester performant',
-                'Profiter de la vie longtemps',
-                'Ne pas être un poids pour mes proches',
-                'Réaliser mes rêves/projets',
-                'Retrouver ma vitalité d\'avant',
-                'Être un exemple inspirant'
-            ],
-            type: 'multi',
-            max: 3
-        },
-        {
-            id: 'commitment',
-            text: 'Temps disponible/jour pour ta santé ?',
-            options: [
-                '2h+',
-                '1-2h',
-                '30min-1h',
-                '15-30min',
-                '<15min'
-            ],
-            type: 'single'
-        },
-        {
-            id: 'ready_to_change',
-            text: 'Prêt à changer maintenant ?',
-            options: [
-                'OUI, j\'ai trop attendu !',
-                'Oui mais progressivement',
-                'J\'hésite encore',
-                'Pas vraiment'
-            ],
-            type: 'single'
-        }
+        { id: 'gender', text: 'Tu es ?', type: 'visual', options: ['Homme', 'Femme'] },
+        { id: 'age', text: 'Quel est ton âge exact ?', type: 'number', min: 18, max: 100, placeholder: 'Ex: 42' },
+        { id: 'weight_height', text: 'Tes mensurations actuelles', type: 'dual_input' },
+        { id: 'objectives', text: 'Tes objectifs prioritaires ?', type: 'multi', max: 3, options: [
+            '⚡ Énergie illimitée', '🧠 Corps optimal', '💤 Mental sharp', 
+            '🏃 Longévité maximale', '⚖️ Zéro stress'
+        ]},
+        { id: 'energy_3years', text: 'Ton énergie vs il y a 3 ans ?', type: 'single', options: [
+            'Mieux qu\'avant !', 'Identique', 'En baisse', 'Fatigue chronique'
+        ]},
+        { id: 'last_100', text: 'Dernière fois à 100% de ta forme ?', type: 'single', options: [
+            'Cette semaine', 'Ce mois-ci', 'Cette année', 'Je ne sais plus...'
+        ]},
+        { id: 'sitting_hours', text: 'Heures assis par jour (bureau, voiture, canapé) :', type: 'single', options: [
+            '<4h', '4-6h', '6-8h', '8-10h', '>10h'
+        ]},
+        { id: 'sport_frequency', text: 'Sport par semaine :', type: 'single', options: [
+            'Jamais', '1 fois', '2-3 fois', '4-5 fois', 'Tous les jours'
+        ]},
+        { id: 'sport_types', text: 'Quel type de sport pratiques-tu ?', type: 'multi', max: 3, options: [
+            '🏃 Cardio/Running', '💪 Musculation', '🧘 Yoga/Pilates', 
+            '🚴 Vélo', '🏊 Natation', '🥊 Sports de combat'
+        ]},
+        { id: 'steps_daily', text: 'Nombre de pas par jour :', type: 'single', options: [
+            '<3000', '3000-5000', '5000-7500', '7500-10000', '>10000'
+        ]},
+        { id: 'sleep_hours', text: 'Heures de sommeil par nuit :', type: 'single', options: [
+            '<5h', '5-6h', '6-7h', '7-8h', '>8h'
+        ]},
+        { id: 'sleep_quality', text: 'Réveils nocturnes :', type: 'single', options: [
+            'Jamais', '1 fois', '2-3 fois', '>3 fois'
+        ]},
+        { id: 'libido_cycle', text: '', type: 'conditional' }, // Sera défini selon le genre
+        { id: 'energy_crash', text: 'Premier crash énergétique de la journée :', type: 'single', options: [
+            'Jamais', 'Après 17h', 'Vers 14-15h', 'Dès le matin'
+        ]},
+        { id: 'weight_ideal', text: 'Ton poids vs ton idéal :', type: 'single', options: [
+            'Parfait', '+2-5kg', '+5-10kg', '+10-15kg', '>15kg'
+        ]},
+        { id: 'digestion', text: 'Ta digestion au quotidien :', type: 'single', options: [
+            'Parfaite', 'Ballonnements occasionnels', 'Problèmes fréquents', 'Douleurs chroniques'
+        ]},
+        { id: 'breakfast', text: 'Ton petit-déjeuner type :', type: 'single', options: [
+            'Rien/Café', 'Sucré (céréales, pain...)', 'Protéiné', 'Jeûne intermittent'
+        ]},
+        { id: 'water_intake', text: 'Verres d\'eau par jour (hors café/thé) :', type: 'single', options: [
+            '<3', '3-5', '6-8', '8-10', '>10'
+        ]},
+        { id: 'alcohol', text: 'Consommation d\'alcool :', type: 'single', options: [
+            'Jamais', '1-2/semaine', '3-4/semaine', 'Tous les jours'
+        ]},
+        { id: 'coffee', text: 'Cafés par jour :', type: 'single', options: [
+            '0', '1-2', '3-4', '5-6', '>6'
+        ]},
+        { id: 'stress_level', text: 'Niveau de stress moyen :', type: 'single', options: [
+            'Zen total', 'Gérable', 'Élevé', 'Burnout proche'
+        ]},
+        { id: 'meditation', text: 'Pratiques-tu méditation/breathwork ?', type: 'single', options: [
+            'Tous les jours', '2-3x/semaine', 'Occasionnellement', 'Jamais'
+        ]},
+        { id: 'screen_time', text: 'Temps d\'écran par jour :', type: 'single', options: [
+            '<2h', '2-4h', '4-6h', '6-8h', '>8h'
+        ]},
+        { id: 'phone_morning', text: 'Téléphone au réveil :', type: 'single', options: [
+            'Jamais', 'Après 1h', 'Dans les 30min', 'Immédiatement'
+        ]},
+        { id: 'supplements', text: 'Prends-tu des compléments alimentaires ?', type: 'single', options: [
+            'Programme complet', 'Quelques basiques', 'Occasionnellement', 'Jamais'
+        ]},
+        { id: 'which_supplements', text: 'Lesquels ?', type: 'multi', max: 5, options: [
+            'Vitamine D', 'Magnésium', 'Oméga 3', 'Probiotiques', 'Multivitamines', 
+            'Protéines', 'Créatine', 'Ashwagandha', 'NAD+', 'Autres'
+        ]},
+        { id: 'tracking', text: 'Utilises-tu des outils de tracking ?', type: 'single', options: [
+            'Oui, plusieurs', 'Une montre/bague', 'Application mobile', 'Non'
+        ]},
+        { id: 'which_trackers', text: 'Lesquels ?', type: 'multi', max: 3, options: [
+            'Apple Watch', 'Garmin', 'Whoop', 'Oura', 'Fitbit', 'Eight Sleep', 'Autre'
+        ]},
+        { id: 'focus_productivity', text: 'Heures vraiment productives par jour :', type: 'single', options: [
+            '<2h', '2-4h', '4-6h', '6-8h', '>8h'
+        ]},
+        { id: 'brain_fog', text: 'Brouillard mental fréquent ?', type: 'single', options: [
+            'Jamais', 'Rarement', 'Souvent', 'Tous les jours'
+        ]},
+        { id: 'cold_exposure', text: 'Exposition au froid (douche froide, bain...) :', type: 'single', options: [
+            'Tous les jours', '2-3x/semaine', 'Occasionnellement', 'Jamais'
+        ]},
+        { id: 'sauna_heat', text: 'Sauna ou exposition chaleur :', type: 'single', options: [
+            '3+/semaine', '1-2/semaine', 'Occasionnellement', 'Jamais'
+        ]},
+        { id: 'nature_time', text: 'Temps dans la nature par semaine :', type: 'single', options: [
+            '>10h', '5-10h', '2-5h', '<2h', 'Jamais'
+        ]},
+        { id: 'sun_exposure', text: 'Exposition soleil quotidienne :', type: 'single', options: [
+            '>1h', '30min-1h', '15-30min', '<15min', 'Jamais'
+        ]},
+        { id: 'social_life', text: 'Vie sociale épanouissante ?', type: 'single', options: [
+            'Très riche', 'Satisfaisante', 'Pourrait être mieux', 'Isolé'
+        ]},
+        { id: 'purpose', text: 'Sens/mission claire dans ta vie ?', type: 'single', options: [
+            'Crystal clear', 'Plutôt claire', 'En recherche', 'Perdu'
+        ]},
+        { id: 'projection_3years', text: 'Si tu continues comme ça, dans 3 ans tu seras :', type: 'single', options: [
+            'Au top!', 'Pareil', 'Moins bien', 'Inquiet pour ma santé'
+        ]},
+        { id: 'ready_change', text: 'Prêt à changer maintenant ?', type: 'single', options: [
+            '100% déterminé', 'Très motivé', 'Curieux', 'Pas sûr'
+        ]},
+        { id: 'investment_health', text: 'Budget annuel santé/développement perso :', type: 'single', options: [
+            '<500€', '500-1000€', '1000-3000€', '3000-5000€', '>5000€'
+        ]},
+        { id: 'time_for_health', text: 'Temps dispo par jour pour ta santé :', type: 'single', options: [
+            '<15min', '15-30min', '30-60min', '1-2h', '>2h'
+        ]},
+        { id: 'biggest_challenge', text: 'Ton plus gros challenge ?', type: 'single', options: [
+            'Manque de temps', 'Manque de motivation', 'Pas de méthode', 'Trop d\'infos contradictoires'
+        ]},
+        { id: 'motivations', text: 'Ce qui te motive vraiment ?', type: 'multi', max: 3, options: [
+            '🚀 Rester performant', '💰 Réussir business', '❤️ Être un exemple', 
+            '🌟 Vivre longtemps', '🎯 Me dépasser'
+        ]}
     ];
     
-    // Fonctions publiques
+    // Flow avec wow breaks
+    const wowBreaks = [
+        { after: 'sitting_hours', id: 'wow-chair', type: 'wow' },
+        { after: 'digestion', id: 'wow-inequality', type: 'wow' },
+        { after: 'alcohol', id: 'wow-genetics', type: 'wow' },
+        { after: 'which_trackers', id: 'wow-moment', type: 'wow' },
+        { after: 'projection_3years', id: 'wow-control', type: 'wow' }
+    ];
+    
+    // Initialisation
     function init() {
-        renderLanding();
-        updateProgressBar();
+        renderCurrentStep();
+        setupKeyboardNavigation();
     }
     
+    // Navigation clavier
+    function setupKeyboardNavigation() {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const activeInput = document.activeElement;
+                if (activeInput && activeInput.tagName === 'INPUT') {
+                    if (activeInput.type === 'number' || activeInput.type === 'text' || activeInput.type === 'email') {
+                        handleNext();
+                    }
+                }
+            }
+        });
+    }
+    
+    // Rendu de l'étape actuelle
+    function renderCurrentStep() {
+        updateProgressBar();
+        
+        if (currentStep === 0) {
+            renderLanding();
+        } else if (currentStep <= questions.length) {
+            const wowBreak = checkForWowBreak();
+            if (wowBreak) {
+                renderWowBreak(wowBreak);
+            } else {
+                renderQuestion(questions[currentStep - 1]);
+            }
+        } else if (currentStep === questions.length + 1) {
+            renderEmailForm();
+        } else if (currentStep === questions.length + 2) {
+            renderCalculating();
+        } else {
+            renderResults();
+        }
+    }
+    
+    // Check for wow break
+    function checkForWowBreak() {
+        if (currentStep > 1) {
+            const prevQuestion = questions[currentStep - 2];
+            return wowBreaks.find(wb => wb.after === prevQuestion.id);
+        }
+        return null;
+    }
+    
+    // Update progress bar
+    function updateProgressBar() {
+        const totalSteps = questions.length + wowBreaks.length + 3;
+        const progress = (currentStep / totalSteps) * 100;
+        
+        document.getElementById('progressBar').style.width = progress + '%';
+        
+        // Update checkmarks
+        if (progress > 33) document.getElementById('check1').classList.add('active');
+        if (progress > 66) document.getElementById('check2').classList.add('active');
+        if (progress > 95) document.getElementById('check3').classList.add('active');
+        
+        // Update text
+        const progressText = document.getElementById('progress-text');
+        if (currentStep === 0) {
+            progressText.textContent = 'Découvre ton profil...';
+        } else if (currentStep <= questions.length * 0.33) {
+            progressText.textContent = 'Analyse de tes habitudes...';
+        } else if (currentStep <= questions.length * 0.66) {
+            progressText.textContent = 'Calcul de ton potentiel...';
+        } else if (currentStep <= questions.length) {
+            progressText.textContent = 'Finalisation du diagnostic...';
+        } else {
+            progressText.textContent = 'Résultats prêts !';
+        }
+    }
+    
+    // Render Landing
     function renderLanding() {
         const html = `
             <div class="card landing">
-                <div class="logo">ORA LIFE</div>
-                <h1>Découvre Ton Score de Vitalité</h1>
-                <p class="subtitle">Test scientifique gratuit - 3 minutes</p>
-                <div class="hook">⚠️ 93% des 35-50 ans vieillissent 2x plus vite sans le savoir</div>
-                <button class="btn-primary" onclick="Quiz.start()">
-                    COMMENCER LE TEST GRATUIT
-                </button>
-            </div>
-        `;
-        document.getElementById('quiz-container').innerHTML = html;
-    }
-    
-    function start() {
-        currentScreen = 1;
-        currentQuestionIndex = 0;
-        renderScreen();
-    }
-    
-    function renderScreen() {
-        const screenId = screenFlow[currentScreen];
-        
-        if (!screenId) {
-            renderResults();
-            return;
-        }
-        
-        updateProgressBar();
-        updateProgressText();
-        
-        if (screenId === 'landing') {
-            renderLanding();
-        } else if (screenId.startsWith('wow-')) {
-            renderWowBreak(screenId);
-        } else if (screenId === 'email') {
-            renderEmailForm();
-        } else if (screenId === 'calculating') {
-            renderCalculating();
-        } else if (screenId === 'results') {
-            renderResults();
-        } else if (screenId.startsWith('q-')) {
-            renderQuestion(screenId);
-        }
-    }
-    
-    function updateProgressBar() {
-        // Calculer le pourcentage de progression
-        const totalScreens = screenFlow.length;
-        const progress = (currentScreen / totalScreens) * 100;
-        
-        // Déterminer quel segment est actif
-        let activeSegment = 1;
-        if (progress > 33) activeSegment = 2;
-        if (progress > 66) activeSegment = 3;
-        
-        // Mettre à jour les segments
-        for (let i = 1; i <= 3; i++) {
-            const segment = document.getElementById(`segment-${i}`);
-            if (segment) {
-                segment.classList.remove('active', 'completed');
-                
-                if (i < activeSegment) {
-                    segment.classList.add('completed');
-                } else if (i === activeSegment) {
-                    segment.classList.add('active');
-                    // Animer la progression dans le segment actif
-                    const segmentProgress = ((progress - (i-1) * 33.33) / 33.33) * 100;
-                    segment.querySelector('.segment-fill').style.width = `${Math.min(segmentProgress, 100)}%`;
-                }
-            }
-        }
-    }
-    
-    function updateProgressText() {
-        const progressText = document.getElementById('progress-text');
-        if (!progressText) return;
-        
-        const screenId = screenFlow[currentScreen];
-        
-        if (screenId === 'landing') {
-            progressText.textContent = 'Prêt à commencer';
-        } else if (screenId.startsWith('q-')) {
-            const questionCount = questions.length;
-            const currentQ = Math.min(currentQuestionIndex + 1, questionCount);
-            progressText.textContent = `Question ${currentQ}/${questionCount}`;
-        } else if (screenId.startsWith('wow-')) {
-            progressText.textContent = 'Découverte scientifique';
-        } else if (screenId === 'email') {
-            progressText.textContent = 'Dernière étape';
-        } else if (screenId === 'calculating') {
-            progressText.textContent = 'Analyse en cours...';
-        } else if (screenId === 'results') {
-            progressText.textContent = 'Résultats';
-        }
-    }
-    
-    
-    function renderQuestion(screenId) {
-        // Parse question index
-        const parts = screenId.substring(2).split('-');
-        const indices = parts.map(i => parseInt(i));
-        
-        let html = '<div class="card question">';
-        
-        // Questions doubles (poids/taille)
-        if (indices.length === 2) {
-            const q = questions[indices[0]];
-            
-            if (q.type === 'dual_number') {
-                html += `
-                    <h2 class="question-text">${q.text}</h2>
-                    <div class="dual-inputs">
-                `;
-                
-                q.fields.forEach(field => {
-                    html += `
-                        <div class="input-group">
-                            <label for="${field.id}">${field.label}</label>
-                            <input type="number" 
-                                   id="${field.id}" 
-                                   min="${field.min}" 
-                                   max="${field.max}"
-                                   placeholder="${field.placeholder}"
-                                   value="${answers[field.id] || ''}"
-                                   onchange="Quiz.updateAnswer('${field.id}', this.value)" />
-                        </div>
-                    `;
-                });
-                
-                html += `
-                    </div>
-                    <div class="imc-display" id="imc-display" style="display: none;">
-                        <div class="imc-value" id="imc-value"></div>
-                        <div class="imc-label" id="imc-label"></div>
-                        <div class="imc-scale">
-                            <span>Maigreur</span>
-                            <span>Normal</span>
-                            <span>Surpoids</span>
-                            <span>Obésité</span>
-                        </div>
-                    </div>
-                    <button class="btn-primary" onclick="Quiz.answerDual()">Suivant →</button>
-                `;
-            }
-        } else {
-            const q = questions[indices[0]];
-            currentQuestionIndex = indices[0];
-            
-            // Setup conditional questions
-            if (q.conditional) {
-                setupConditionalQuestion(q);
-            }
-            
-            if (q.type === 'visual' && q.id === 'gender') {
-                html += `
-                    <h2 class="question-text">${q.text}</h2>
-                    <div class="visual-options">
-                        <div class="visual-option ${answers.gender === 'Homme' ? 'selected' : ''}" onclick="Quiz.answer('${q.id}', 'Homme')">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop" alt="Homme">
-                            <div class="label">Homme</div>
-                        </div>
-                        <div class="visual-option ${answers.gender === 'Femme' ? 'selected' : ''}" onclick="Quiz.answer('${q.id}', 'Femme')">
-                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop" alt="Femme">
-                            <div class="label">Femme</div>
-                        </div>
-                    </div>
-                `;
-            } else if (q.type === 'single') {
-                const useGrid = q.options.length > 6;
-                html += `
-                    <h2 class="question-text">${q.text}</h2>
-                    <div class="${useGrid ? 'options-grid' : 'options'}">
-                        ${q.options.map(opt => 
-                            `<div class="option ${answers[q.id] === opt ? 'selected' : ''}" onclick="Quiz.answer('${q.id}', '${opt.replace(/'/g, "\\'")}')">${opt}</div>`
-                        ).join('')}
-                    </div>
-                `;
-            } else if (q.type === 'number') {
-                html += `
-                    <h2 class="question-text">${q.text}</h2>
-                    <input type="number" id="${q.id}" min="${q.min}" max="${q.max}" 
-                           placeholder="${q.placeholder || ''}"
-                           value="${answers[q.id] || ''}" />
-                    <button class="btn-primary" onclick="Quiz.answerNumber('${q.id}')">Suivant →</button>
-                `;
-            } else if (q.type === 'multi') {
-                const maxText = q.max === 'unlimited' ? 'Choisis toutes les options pertinentes' : `Choisis jusqu'à ${q.max} options`;
-                html += `
-                    <h2 class="question-text">${q.text}</h2>
-                    <p class="multi-select-info">${maxText}</p>
-                    <div class="${q.options.length > 6 ? 'options-grid' : 'options'}">
-                        ${q.options.map(opt => {
-                            const isSelected = multiAnswers[q.id] && multiAnswers[q.id].includes(opt);
-                            return `<div class="option multi ${isSelected ? 'selected' : ''}" data-question="${q.id}" onclick="Quiz.toggleMulti('${q.id}', '${opt.replace(/'/g, "\\'")}')">${opt}</div>`;
-                        }).join('')}
-                    </div>
-                    <button class="btn-primary" onclick="Quiz.validateMulti('${q.id}')">Valider →</button>
-                `;
-            }
-        }
-        
-        if (currentScreen > 1) {
-            html += `<button class="btn-back" onclick="Quiz.prev()">← Retour</button>`;
-        }
-        
-        html += '</div>';
-        document.getElementById('quiz-container').innerHTML = html;
-        
-        // Setup IMC listener
-        if (screenId === 'q-2-3') {
-            setupIMCListeners();
-        }
-    }
-    
-    function setupConditionalQuestion(q) {
-        const gender = answers.gender;
-        
-        if (q.id === 'cycle_libido') {
-            if (gender === 'Femme') {
-                q.text = 'Où en es-tu dans ton cycle féminin ?';
-                q.options = [
-                    'Cycles réguliers',
-                    'Cycles irréguliers', 
-                    'Péri-ménopause',
-                    'Ménopause',
-                    'Grossesse',
-                    'Post-partum'
-                ];
-            } else {
-                // Skip for men
-                currentScreen++;
-                renderScreen();
-                return;
-            }
-        } else if (q.id === 'erection_orgasm') {
-            if (gender === 'Homme') {
-                q.text = 'Qualité érection matinale ?';
-                q.options = [
-                    'Tous les jours',
-                    '3-5 fois/semaine',
-                    '1-2 fois/semaine',
-                    'Rarement',
-                    'Jamais'
-                ];
-            } else {
-                // Skip for women
-                currentScreen++;
-                renderScreen();
-                return;
-            }
-        }
-    }
-    
-    function setupIMCListeners() {
-        const weightInput = document.getElementById('weight');
-        const heightInput = document.getElementById('height');
-        
-        if (weightInput && heightInput) {
-            const calculateIMC = () => {
-                const weight = parseFloat(weightInput.value);
-                const height = parseFloat(heightInput.value);
-                
-                if (weight && height) {
-                    const imc = weight / ((height/100) * (height/100));
-                    const imcDisplay = document.getElementById('imc-display');
-                    const imcValue = document.getElementById('imc-value');
-                    const imcLabel = document.getElementById('imc-label');
-                    
-                    if (imcDisplay && imcValue && imcLabel) {
-                        imcDisplay.style.display = 'block';
-                        imcValue.textContent = imc.toFixed(1);
-                        
-                        if (imc < 18.5) {
-                            imcValue.className = 'imc-value maigreur';
-                            imcLabel.textContent = 'Maigreur';
-                        } else if (imc < 25) {
-                            imcValue.className = 'imc-value normal';
-                            imcLabel.textContent = 'Poids normal';
-                        } else if (imc < 30) {
-                            imcValue.className = 'imc-value surpoids';
-                            imcLabel.textContent = 'Surpoids';
-                        } else {
-                            imcValue.className = 'imc-value obesite';
-                            imcLabel.textContent = 'Obésité';
-                        }
-                    }
-                }
-            };
-            
-            weightInput.addEventListener('input', calculateIMC);
-            heightInput.addEventListener('input', calculateIMC);
-            
-            // Calculate on load if values exist
-            calculateIMC();
-        }
-    }
-    
-    function renderWowBreak(screenId) {
-        let html = '<div class="wow-break">';
-        
-        switch(screenId) {
-            case 'wow-1':
-                html += `
-                    <div class="wow-icon">🪑</div>
-                    <h2 class="wow-title">LA CHAISE QUI TUE</h2>
-                    <div class="wow-stat">+34%</div>
-                    <p class="wow-description">
-                        de mortalité après 10h assis par jour<br>
-                        <strong>MÊME avec du sport régulier</strong>
-                    </p>
-                    <div class="wow-graph">
-                        <div class="graph-bars">
-                            <div class="bar" style="height: 50%;">
-                                <span>4h</span>
-                                <span>Normal</span>
-                            </div>
-                            <div class="bar" style="height: 75%;">
-                                <span>8h</span>
-                                <span>+15%</span>
-                            </div>
-                            <div class="bar" style="height: 100%;">
-                                <span>10h+</span>
-                                <span>+34%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="wow-description">
-                        Sans sport : +52% de mortalité<br>
-                        Solution : Pause active toutes les heures
-                    </p>
-                    <div class="wow-source">📊 Medicine & Science in Sports & Exercise (2019)</div>
-                `;
-                break;
-                
-            case 'wow-2':
-                html += `
-                    <div class="wow-icon">⚖️</div>
-                    <h2 class="wow-title">L'INÉGALITÉ FACE À LA MORT</h2>
-                    <div class="wow-stat">6.8 ans</div>
-                    <p class="wow-description">d'écart d'espérance de vie selon ta catégorie sociale</p>
-                    <div class="wow-graph">
-                        <div style="padding: 20px; background: #f8f9fa; border-radius: 12px;">
-                            <div style="margin-bottom: 15px;">
-                                <strong>👔 Cadres supérieurs :</strong> 84.4 ans
-                            </div>
-                            <div style="margin-bottom: 15px;">
-                                <strong>💼 Professions intermédiaires :</strong> 82 ans
-                            </div>
-                            <div>
-                                <strong>🔧 Ouvriers :</strong> 77.6 ans
-                            </div>
-                        </div>
-                    </div>
-                    <p class="wow-description">
-                        <strong>Pourquoi cette différence ?</strong><br>
-                        • Stress chronique vs stress physique<br>
-                        • Accès aux soins et prévention<br>
-                        • Conditions de travail<br>
-                        • Connaissances santé
-                    </p>
-                    <div class="wow-source">📊 INSEE 2023 - Espérance de vie par CSP</div>
-                `;
-                break;
-                
-            case 'wow-3':
-                html += `
-                    <div class="wow-icon">🧬</div>
-                    <h2 class="wow-title">LA GÉNÉTIQUE ? PRESQUE RIEN !</h2>
-                    <div class="genetics-display">
-                        <div class="genetics-part">
-                            <div class="stat small">7%</div>
-                            <div class="label">Génétique</div>
-                        </div>
-                        <div class="genetics-part">
-                            <div class="stat big">93%</div>
-                            <div class="label">Tes choix quotidiens</div>
-                        </div>
-                    </div>
-                    <p class="wow-description">
-                        <strong>"La génétique n'explique qu'environ 7% de la longévité.<br>
-                        Le reste se gagne au quotidien."</strong><br><br>
-                        Étude sur 400 millions de profils généalogiques :<br>
-                        L'héritabilité réelle de la durée de vie est minime.<br>
-                        <em>Tu es le maître de ton destin biologique.</em>
-                    </p>
-                    <div class="wow-source">📊 Ruby et al., Genetics, 2018 - PMC6661543</div>
-                `;
-                break;
-                
-            // Ajouter les autres wow breaks...
-            default:
-                html += `
-                    <div class="wow-icon">💡</div>
-                    <h2 class="wow-title">DÉCOUVERTE SCIENTIFIQUE</h2>
-                    <p class="wow-description">Information importante pour ta santé</p>
-                `;
-        }
-        
-        html += `
-            <button class="btn-primary" onclick="Quiz.next()">Continuer →</button>
-        </div>`;
-        
-        document.getElementById('quiz-container').innerHTML = html;
-    }
-    
-    function renderEmailForm() {
-        const html = `
-            <div class="card">
-                <h2 class="question-text">Dernière étape !</h2>
-                <p class="subtitle">Reçois ton diagnostic personnalisé par email</p>
-                <div class="email-form">
-                    <input type="text" id="name" placeholder="Ton prénom" value="${userInfo.name || ''}" />
-                    <input type="email" id="email" placeholder="ton@email.com" value="${userInfo.email || ''}" />
-                    <input type="tel" id="phone" placeholder="06 12 34 56 78 (optionnel)" value="${userInfo.phone || ''}" />
-                    <button class="btn-primary" onclick="Quiz.submitQuiz()">
-                        OBTENIR MON DIAGNOSTIC →
-                    </button>
+                <h1>Découvre Ton Âge<br>Biologique Réel</h1>
+                <p class="subtitle">Test scientifique gratuit • 3 minutes</p>
+                <div class="hook">
+                    ⚠️ 93% des entrepreneurs vieillissent 2x plus vite sans le savoir
                 </div>
-                <p style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: #666;">
-                    🔒 100% gratuit et confidentiel<br>
-                    ✅ Résultats basés sur 1200+ études<br>
-                    💯 Protocole personnalisé ou remboursé
+                <button class="btn-primary" onclick="Quiz.next()">
+                    COMMENCER LE TEST →
+                </button>
+                <p style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+                    Basé sur 1200+ études scientifiques<br>
+                    Déjà 12,847 entrepreneurs testés
                 </p>
             </div>
         `;
         document.getElementById('quiz-container').innerHTML = html;
     }
     
+    // Render Question
+    function renderQuestion(question) {
+        let html = '<div class="card">';
+        
+        // Question spéciale conditionnelle (libido/cycle)
+        if (question.id === 'libido_cycle') {
+            if (answers.gender === 'Femme') {
+                question.text = 'Où en es-tu dans ton cycle ?';
+                question.options = ['Réglée', 'Folliculaire', 'Ovulation', 'Lutéale', 'Ménopause'];
+            } else {
+                question.text = 'Ta libido actuellement :';
+                question.options = ['Au top!', 'Normale', 'En baisse', 'Problématique'];
+            }
+        }
+        
+        html += `<h2 class="question-text">${question.text}</h2>`;
+        
+        // Render selon le type
+        switch(question.type) {
+            case 'visual':
+                html += renderVisualOptions(question);
+                break;
+            case 'number':
+                html += renderNumberInput(question);
+                break;
+            case 'dual_input':
+                html += renderDualInput(question);
+                break;
+            case 'single':
+            case 'conditional':
+                html += renderSingleOptions(question);
+                break;
+            case 'multi':
+                html += renderMultiOptions(question);
+                break;
+        }
+        
+        // Bouton retour (sauf première question)
+        if (currentStep > 1) {
+            html += '<button class="btn-back" onclick="Quiz.prev()">← Retour</button>';
+        }
+        
+        html += '</div>';
+        document.getElementById('quiz-container').innerHTML = html;
+        
+        // Focus sur input si nécessaire
+        const firstInput = document.querySelector('input[type="number"], input[type="text"]');
+        if (firstInput) firstInput.focus();
+    }
+    
+    // Render Visual Options
+    function renderVisualOptions(question) {
+        let html = '<div class="visual-options">';
+        const images = {
+            'Homme': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
+            'Femme': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop'
+        };
+        
+        question.options.forEach(option => {
+            const selected = answers[question.id] === option ? 'selected' : '';
+            html += `
+                <div class="visual-option ${selected}" onclick="Quiz.answer('${question.id}', '${option}')">
+                    <img src="${images[option]}" alt="${option}">
+                    <div class="label">${option}</div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        html += '<button class="btn-primary" onclick="Quiz.next()">Continuer →</button>';
+        return html;
+    }
+    
+    // Render Number Input
+    function renderNumberInput(question) {
+        const value = answers[question.id] || '';
+        return `
+            <input type="number" 
+                   id="${question.id}" 
+                   min="${question.min}" 
+                   max="${question.max}" 
+                   placeholder="${question.placeholder}"
+                   value="${value}"
+                   onchange="Quiz.answer('${question.id}', this.value)">
+            <button class="btn-primary" onclick="Quiz.next()">Continuer →</button>
+        `;
+    }
+    
+    // Render Dual Input (poids/taille)
+    function renderDualInput(question) {
+        const weight = answers.weight || '';
+        const height = answers.height || '';
+        let html = `
+            <div class="dual-inputs">
+                <div class="input-group">
+                    <label>Poids (kg)</label>
+                    <input type="number" id="weight" min="40" max="200" 
+                           placeholder="73" value="${weight}"
+                           onchange="Quiz.answer('weight', this.value); Quiz.calculateIMC();">
+                </div>
+                <div class="input-group">
+                    <label>Taille (cm)</label>
+                    <input type="number" id="height" min="140" max="220" 
+                           placeholder="177" value="${height}"
+                           onchange="Quiz.answer('height', this.value); Quiz.calculateIMC();">
+                </div>
+            </div>
+        `;
+        
+        // Affichage IMC si les deux valeurs existent
+        if (weight && height) {
+            const imc = (weight / ((height/100) * (height/100))).toFixed(1);
+            let status = 'normal';
+            let statusText = 'Poids normal ✓';
+            
+            if (imc < 18.5) {
+                status = 'souspoids';
+                statusText = 'Sous-poids';
+            } else if (imc >= 25 && imc < 30) {
+                status = 'surpoids';
+                statusText = 'Surpoids';
+            } else if (imc >= 30) {
+                status = 'obesite';
+                statusText = 'Obésité';
+            }
+            
+            html += `
+                <div class="imc-display">
+                    <div class="imc-label">Ton IMC :</div>
+                    <div class="imc-value">${imc}</div>
+                    <div class="imc-status ${status}">${statusText}</div>
+                    <div class="imc-gauge">
+                        <div class="imc-marker" style="left: ${Math.min(95, Math.max(5, (imc - 15) * 4))}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += '<button class="btn-primary" onclick="Quiz.next()">Continuer →</button>';
+        return html;
+    }
+    
+    // Render Single Options
+    function renderSingleOptions(question) {
+        let html = '<div class="options">';
+        
+        question.options.forEach(option => {
+            const selected = answers[question.id] === option ? 'selected' : '';
+            html += `
+                <div class="option ${selected}" 
+                     onclick="Quiz.answer('${question.id}', '${option}'); Quiz.next();">
+                    ${option}
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        return html;
+    }
+    
+    // Render Multi Options
+    function renderMultiOptions(question) {
+        const selections = multiSelections[question.id] || [];
+        let html = `
+            <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                Choisis jusqu'à ${question.max} options
+            </p>
+            <div class="multi-options">
+        `;
+        
+        question.options.forEach(option => {
+            const selected = selections.includes(option) ? 'selected' : '';
+            html += `
+                <div class="multi-option ${selected}" 
+                     onclick="Quiz.toggleMulti('${question.id}', '${option}', ${question.max})">
+                    <div class="checkbox"></div>
+                    <span>${option}</span>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        html += `<button class="btn-primary" onclick="Quiz.next()" 
+                  ${selections.length === 0 ? 'disabled' : ''}>
+                  Continuer →
+                 </button>`;
+        return html;
+    }
+    
+    // Render Wow Break
+    function renderWowBreak(wowBreak) {
+        let html = '<div class="card wow-screen">';
+        
+        switch(wowBreak.id) {
+            case 'wow-chair':
+                html += `
+                    <div class="wow-icon">💀</div>
+                    <h2 class="wow-title">LA CHAISE QUI TUE</h2>
+                    <div class="wow-stat">+34%</div>
+                    <p class="wow-description">
+                        <strong>10h assis = +34% mortalité (AVEC sport régulier)</strong><br>
+                        <strong>10h assis = +52% mortalité (SANS sport)</strong><br><br>
+                        Rester assis plus de 8h/jour augmente drastiquement ton risque de mortalité,
+                        même si tu fais du sport. La position assise prolongée est le nouveau tabac.
+                    </p>
+                    <div class="wow-graph">
+                        <div style="display: flex; justify-content: space-around; align-items: flex-end; height: 150px;">
+                            <div style="background: #28a745; width: 60px; height: 60%;">
+                                <div style="text-align: center; color: white; padding: 5px;">4h<br>Normal</div>
+                            </div>
+                            <div style="background: #ffc107; width: 60px; height: 80%;">
+                                <div style="text-align: center; color: white; padding: 5px;">8h<br>+15%</div>
+                            </div>
+                            <div style="background: #ff4444; width: 60px; height: 100%;">
+                                <div style="text-align: center; color: white; padding: 5px;">10h<br>+34%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wow-source">
+                        📊 Étude Katzmarzyk et al., Medicine & Science in Sports & Exercise, 2019
+                    </div>
+                `;
+                break;
+                
+            case 'wow-inequality':
+                html += `
+                    <div class="wow-icon">⏰</div>
+                    <h2 class="wow-title">L'INÉGALITÉ FACE À LA MORT</h2>
+                    <div class="wow-stat">6.8 ANS</div>
+                    <p class="wow-description">
+                        <strong>Différence d'espérance de vie selon le mode de vie</strong><br><br>
+                        • Cadres supérieurs : 84.4 ans<br>
+                        • Ouvriers : 77.6 ans<br><br>
+                        La différence ? Stress chronique, sédentarité et habitudes alimentaires.
+                        Ton mode de vie détermine directement combien d'années tu vas vivre.
+                    </p>
+                    <div class="wow-source">
+                        📊 INSEE, Études démographiques 2019-2023
+                    </div>
+                `;
+                break;
+                
+            case 'wow-genetics':
+                html += `
+                    <div class="wow-icon">🧬</div>
+                    <h2 class="wow-title">TU CONTRÔLES TON DESTIN</h2>
+                    <div class="wow-stat">7%</div>
+                    <p class="wow-description">
+                        <strong>Seulement 7% de ta longévité dépend de tes gènes</strong><br><br>
+                        Étude massive sur 400 millions de profils généalogiques :<br>
+                        93% de ta santé et longévité dépendent de tes choix quotidiens.<br><br>
+                        <em>Tu es le maître de ton destin biologique.</em>
+                    </p>
+                    <div class="wow-graph">
+                        <div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+                            <div style="text-align: center;">
+                                <div style="width: 100px; height: 100px; border-radius: 50%; 
+                                     background: conic-gradient(#ff4444 0% 7%, #01FF00 7% 100%);
+                                     display: flex; align-items: center; justify-content: center;">
+                                    <div style="background: white; width: 80px; height: 80px; 
+                                         border-radius: 50%; display: flex; align-items: center; 
+                                         justify-content: center; font-weight: bold;">
+                                        93%
+                                    </div>
+                                </div>
+                                <p style="margin-top: 10px;">Tes choix</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wow-source">
+                        📊 Ruby et al., Nature Medicine, 2018 - PMC6661543
+                    </div>
+                `;
+                break;
+                
+            case 'wow-moment':
+                html += `
+                    <div class="wow-icon">⚡</div>
+                    <h2 class="wow-title">MOMENT DE VÉRITÉ</h2>
+                    <div style="font-size: 48px; margin: 30px 0;">
+                        <span id="countdown">3</span>
+                    </div>
+                    <p class="wow-description">
+                        Dans quelques secondes, tu vas découvrir ton vrai potentiel de transformation...<br><br>
+                        <strong>Es-tu prêt à voir la vérité sur ton état actuel ?</strong>
+                    </p>
+                    <script>
+                        let count = 3;
+                        const interval = setInterval(() => {
+                            count--;
+                            if (count > 0) {
+                                document.getElementById('countdown').textContent = count;
+                            } else {
+                                clearInterval(interval);
+                                document.getElementById('countdown').innerHTML = '🚀';
+                            }
+                        }, 1000);
+                    </script>
+                `;
+                break;
+                
+            case 'wow-control':
+                html += `
+                    <div class="wow-icon">🎯</div>
+                    <h2 class="wow-title">TU AS LE CONTRÔLE</h2>
+                    <div class="wow-stat">+10 ANS</div>
+                    <p class="wow-description">
+                        <strong>Tu peux gagner 10 ans de vie en pleine forme</strong><br><br>
+                        Les bonnes habitudes peuvent littéralement inverser ton vieillissement :<br>
+                        • Exercice régulier : +3 ans<br>
+                        • Sommeil optimisé : +2 ans<br>
+                        • Nutrition adaptée : +3 ans<br>
+                        • Gestion du stress : +2 ans<br><br>
+                        <em>Prêt à reprendre le contrôle ?</em>
+                    </p>
+                    <div class="wow-source">
+                        📊 Longo et al., Cell Metabolism, 2021
+                    </div>
+                `;
+                break;
+        }
+        
+        html += '<button class="btn-primary" onclick="Quiz.next()">Continuer →</button>';
+        html += '</div>';
+        document.getElementById('quiz-container').innerHTML = html;
+    }
+    
+    // Render Email Form
+    function renderEmailForm() {
+        const html = `
+            <div class="card">
+                <h2 class="question-text">Dernière étape !</h2>
+                <p class="subtitle">Reçois ton diagnostic personnalisé par email</p>
+                
+                <input type="text" id="name" placeholder="Ton prénom" 
+                       value="${userInfo.name || ''}"
+                       onchange="Quiz.saveUserInfo('name', this.value)">
+                
+                <input type="email" id="email" placeholder="ton@email.com" 
+                       value="${userInfo.email || ''}"
+                       onchange="Quiz.saveUserInfo('email', this.value)">
+                
+                <input type="tel" id="phone" placeholder="06 12 34 56 78 (optionnel)" 
+                       value="${userInfo.phone || ''}"
+                       onchange="Quiz.saveUserInfo('phone', this.value)">
+                
+                <button class="btn-primary" onclick="Quiz.submitQuiz()">
+                    OBTENIR MES RÉSULTATS →
+                </button>
+                
+                <p style="text-align: center; margin-top: 30px; color: #666; font-size: 14px;">
+                    🔒 100% gratuit et confidentiel<br>
+                    ✅ Résultats basés sur 1200+ études<br>
+                    📧 Protocole personnalisé envoyé par email
+                </p>
+            </div>
+        `;
+        document.getElementById('quiz-container').innerHTML = html;
+        document.getElementById('name').focus();
+    }
+    
+    // Render Calculating
     function renderCalculating() {
         const html = `
             <div class="card calculating">
@@ -1049,268 +637,288 @@ const Quiz = (function() {
         `;
         document.getElementById('quiz-container').innerHTML = html;
         
-        // Animate steps
-        setTimeout(() => document.getElementById('step1').classList.add('completed'), 1000);
-        setTimeout(() => document.getElementById('step2').classList.add('completed'), 2000);
-        setTimeout(() => document.getElementById('step3').classList.add('completed'), 3000);
+        // Animation des étapes
+        setTimeout(() => document.getElementById('step1').classList.add('active'), 500);
+        setTimeout(() => document.getElementById('step2').classList.add('active'), 1500);
+        setTimeout(() => document.getElementById('step3').classList.add('active'), 2500);
         
-        // Calculate and show results
-        setTimeout(() => calculateAndShowResults(), 4000);
+        // Calcul et affichage des résultats
+        setTimeout(() => calculateAndShowResults(), 3500);
     }
     
+    // Calculate and Show Results
     async function calculateAndShowResults() {
         try {
-            // Send to API
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ answers })
-            });
+            // Calcul local du score
+            const score = calculateBiologicalAge();
             
-            const result = await response.json();
+            // Envoi vers Google Sheets
+            await sendToGoogleSheets();
             
-            // Send to Google Sheets
-            const allData = {
-                ...userInfo,
-                ...answers,
-                score: result.score,
-                biologicalAge: result.biologicalAge,
-                timestamp: new Date().toISOString()
-            };
-            
-            await fetch(SHEETS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(allData)
-            });
-            
-            // Store result and show
-            window.quizResult = result;
-            renderResults();
-            
+            // Affichage des résultats
+            renderResults(score);
         } catch (error) {
             console.error('Erreur:', error);
-            // Fallback result
-            window.quizResult = {
-                score: 73,
-                biologicalAge: answers.age ? parseInt(answers.age) + 5 : 45,
-                message: 'Analyse complète disponible'
-            };
-            renderResults();
+            renderResults(calculateBiologicalAge());
         }
     }
     
-    function renderResults() {
-        const result = window.quizResult || {};
+    // Calculate Biological Age
+    function calculateBiologicalAge() {
         const realAge = parseInt(answers.age) || 40;
-        const bioAge = result.biologicalAge || realAge + 5;
-        const ageDiff = bioAge - realAge;
+        let biologicalAge = realAge;
+        let factors = [];
         
-        let html = '<div class="results">';
+        // Facteurs de vieillissement
         
-        // Age comparison
-        html += `
-            <div class="result-card age-comparison">
-                <div class="age-actual">Ton âge chronologique : ${realAge} ans</div>
-                <div class="age-visual">
-                    <div class="age-number biological ${ageDiff <= 0 ? 'good' : ''}">
-                        ${bioAge}
-                        <div class="age-label">Âge biologique</div>
+        // Sédentarité
+        if (answers.sitting_hours === '>10h') {
+            biologicalAge += 3;
+            factors.push({ icon: '🪑', name: 'Sédentarité toxique', impact: '+3 ans', description: '10h+ assis/jour' });
+        } else if (answers.sitting_hours === '8-10h') {
+            biologicalAge += 2;
+            factors.push({ icon: '🪑', name: 'Sédentarité élevée', impact: '+2 ans', description: '8-10h assis/jour' });
+        }
+        
+        // Sommeil
+        if (answers.sleep_hours === '<5h') {
+            biologicalAge += 3;
+            factors.push({ icon: '😴', name: 'Dette de sommeil', impact: '+3 ans', description: 'Moins de 5h/nuit' });
+        } else if (answers.sleep_hours === '5-6h') {
+            biologicalAge += 2;
+            factors.push({ icon: '😴', name: 'Sommeil insuffisant', impact: '+2 ans', description: '5-6h/nuit' });
+        }
+        
+        // Stress
+        if (answers.stress_level === 'Burnout proche') {
+            biologicalAge += 3;
+            factors.push({ icon: '🔥', name: 'Stress chronique', impact: '+3 ans', description: 'Burnout imminent' });
+        } else if (answers.stress_level === 'Élevé') {
+            biologicalAge += 2;
+            factors.push({ icon: '🔥', name: 'Stress élevé', impact: '+2 ans', description: 'Stress mal géré' });
+        }
+        
+        // Sport (facteur protecteur)
+        if (answers.sport_frequency === 'Tous les jours') {
+            biologicalAge -= 2;
+        } else if (answers.sport_frequency === 'Jamais') {
+            biologicalAge += 2;
+            factors.push({ icon: '🏃', name: 'Zéro activité', impact: '+2 ans', description: 'Aucun sport' });
+        }
+        
+        // Alcool
+        if (answers.alcohol === 'Tous les jours') {
+            biologicalAge += 2;
+            factors.push({ icon: '🍷', name: 'Alcool quotidien', impact: '+2 ans', description: 'Consommation excessive' });
+        }
+        
+        // Poids
+        if (answers.weight && answers.height) {
+            const imc = answers.weight / ((answers.height/100) * (answers.height/100));
+            if (imc > 30) {
+                biologicalAge += 2;
+                factors.push({ icon: '⚖️', name: 'Surpoids important', impact: '+2 ans', description: 'IMC > 30' });
+            }
+        }
+        
+        // Limiter les top 3 facteurs
+        factors = factors.slice(0, 3);
+        
+        return {
+            realAge,
+            biologicalAge,
+            difference: biologicalAge - realAge,
+            factors,
+            potential: Math.max(5, Math.abs(biologicalAge - realAge) + 3)
+        };
+    }
+    
+    // Send to Google Sheets
+    async function sendToGoogleSheets() {
+        const data = {
+            timestamp: new Date().toISOString(),
+            ...answers,
+            ...userInfo,
+            multiSelections: JSON.stringify(multiSelections)
+        };
+        
+        try {
+            await fetch(SHEETS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } catch (error) {
+            console.log('Sheets error:', error);
+        }
+    }
+    
+    // Render Results
+    function renderResults(score) {
+        const html = `
+            <div class="card results-screen">
+                <div class="result-header">
+                    <h1>TON DIAGNOSTIC PERSONNALISÉ</h1>
+                </div>
+                
+                <!-- Affichage des âges -->
+                <div class="age-display">
+                    <div class="age-block">
+                        <div class="age-label">Âge Réel</div>
+                        <div class="age-value">${score.realAge}</div>
+                        <div class="age-label">ans</div>
                     </div>
                     <div class="age-arrow">→</div>
-                    <div class="age-number real">
-                        ${realAge}
-                        <div class="age-label">Âge réel</div>
+                    <div class="age-block">
+                        <div class="age-label">Âge Biologique</div>
+                        <div class="age-value biological">${score.biologicalAge}</div>
+                        <div class="age-label">ans</div>
                     </div>
                 </div>
-        `;
-        
-        if (ageDiff > 0) {
-            html += `
-                <div class="age-difference bad">
-                    <strong>⚠️ Tu vieillis trop vite</strong><br>
-                    Ton corps a ${ageDiff} ans d'avance sur ton âge réel
-                </div>
-            `;
-        } else if (ageDiff < 0) {
-            html += `
-                <div class="age-difference good">
-                    <strong>✨ Excellent !</strong><br>
-                    Ton corps a ${Math.abs(ageDiff)} ans de moins que ton âge réel
-                </div>
-            `;
-        } else {
-            html += `
-                <div class="age-difference">
-                    <strong>👍 Pas mal !</strong><br>
-                    Ton âge biologique correspond à ton âge réel
-                </div>
-            `;
-        }
-        
-        html += '</div>';
-        
-        // Factors
-        html += `
-            <div class="result-card factors-section">
-                <h3 class="factors-title">3 FACTEURS ${ageDiff > 0 ? 'QUI TE VIEILLISSENT' : 'À OPTIMISER'}</h3>
-        `;
-        
-        const factors = result.factors || [
-            { name: 'Sédentarité', desc: 'Trop d\'heures assis', impact: '-2 ans' },
-            { name: 'Sommeil', desc: 'Récupération insuffisante', impact: '-2 ans' },
-            { name: 'Stress', desc: 'Cortisol chronique', impact: '-1 an' }
-        ];
-        
-        factors.forEach(factor => {
-            html += `
-                <div class="factor-item ${ageDiff <= 0 ? 'positive' : ''}">
-                    <div class="factor-info">
-                        <div class="factor-name">${factor.name}</div>
-                        <div class="factor-description">${factor.desc}</div>
+                
+                ${score.difference > 0 ? `
+                    <div class="age-difference">
+                        ⚠️ Tu vieillis ${Math.round(score.difference * 20 / score.realAge)}% plus vite que normal
                     </div>
-                    <div class="factor-impact ${ageDiff <= 0 ? 'positive' : ''}">${factor.impact}</div>
+                ` : `
+                    <div class="age-difference" style="background: #d4edda; color: #155724;">
+                        ✅ Bravo ! Tu vieillis bien
+                    </div>
+                `}
+                
+                <!-- Facteurs de vieillissement -->
+                ${score.factors.length > 0 ? `
+                    <div class="factors-section">
+                        <h3 class="factors-title">CE QUI T'USE LE PLUS</h3>
+                        ${score.factors.map(factor => `
+                            <div class="factor-item">
+                                <div class="factor-icon">${factor.icon}</div>
+                                <div class="factor-content">
+                                    <div class="factor-name">${factor.name}</div>
+                                    <div class="factor-description">${factor.description}</div>
+                                </div>
+                                <div class="factor-impact">${factor.impact}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                <!-- Potentiel -->
+                <div class="potential-section">
+                    <h3 class="potential-title">💪 TON POTENTIEL DE RÉCUPÉRATION</h3>
+                    <p style="color: #aaa; margin-bottom: 20px;">
+                        En corrigeant ces ${score.factors.length} points, tu peux :
+                    </p>
+                    <div class="potential-value">
+                        GAGNER ${score.potential} ANS
+                    </div>
+                    <p style="color: #aaa; margin-top: 20px;">
+                        de vie en pleine forme
+                    </p>
                 </div>
-            `;
-        });
-        
-        html += '</div>';
-        
-        // Recovery potential
-        html += `
-            <div class="result-card recovery-section">
-                <h3 class="recovery-title">✨ MAIS TU PEUX ${ageDiff > 0 ? 'RÉCUPÉRER' : 'ENCORE PROGRESSER'}</h3>
-                <div class="recovery-stat">${ageDiff > 0 ? `CES ${ageDiff} ANS PERDUS` : '+5 ANS'}</div>
-                <p class="recovery-description">
-                    ${ageDiff > 0 ? '+ EN GAGNER 3 DE PLUS' : 'de vie en pleine forme'}<br><br>
-                    Les bonnes habitudes peuvent te faire gagner<br>
-                    <strong>${ageDiff > 0 ? ageDiff + 3 : 8} ans de vie en pleine forme</strong>
-                </p>
+                
+                <!-- CTA -->
+                <div class="cta-section">
+                    <button class="btn-primary" onclick="window.location.href='https://oralife.club/protocole'">
+                        DÉCOUVRIR MON PROTOCOLE GRATUIT →
+                    </button>
+                    <p style="margin-top: 20px; color: #666; font-size: 14px;">
+                        📧 Vérifie tes emails, ton protocole détaillé arrive !
+                    </p>
+                </div>
             </div>
         `;
-        
-        // CTA
-        html += `
-            <div class="cta-section">
-                <a href="#" class="cta-button" onclick="Quiz.getProtocol(); return false;">
-                    OBTENIR MON PROTOCOLE GRATUIT →
-                </a>
-            </div>
-        `;
-        
-        html += '</div>';
         document.getElementById('quiz-container').innerHTML = html;
-    }
-    
-    // Event handlers
-    function answer(questionId, value) {
-        answers[questionId] = value;
-        next();
-    }
-    
-    function answerNumber(questionId) {
-        const input = document.getElementById(questionId);
-        if (input && input.value) {
-            answers[questionId] = input.value;
-            next();
-        }
-    }
-    
-    function answerDual() {
-        const weight = document.getElementById('weight').value;
-        const height = document.getElementById('height').value;
-        
-        if (weight && height) {
-            answers.weight = weight;
-            answers.height = height;
-            next();
-        }
-    }
-    
-    function updateAnswer(field, value) {
-        answers[field] = value;
-    }
-    
-    function toggleMulti(questionId, value) {
-        if (!multiAnswers[questionId]) {
-            multiAnswers[questionId] = [];
-        }
-        
-        const index = multiAnswers[questionId].indexOf(value);
-        if (index > -1) {
-            multiAnswers[questionId].splice(index, 1);
-        } else {
-            const q = questions.find(q => q.id === questionId);
-            if (q.max !== 'unlimited' && multiAnswers[questionId].length >= q.max) {
-                alert(`Maximum ${q.max} choix`);
-                return;
-            }
-            multiAnswers[questionId].push(value);
-        }
-        
-        // Update UI
-        renderScreen();
-    }
-    
-    function validateMulti(questionId) {
-        if (multiAnswers[questionId] && multiAnswers[questionId].length > 0) {
-            answers[questionId] = multiAnswers[questionId].join(',');
-            next();
-        } else {
-            alert('Sélectionne au moins une option');
-        }
-    }
-    
-    function next() {
-        currentScreen++;
-        renderScreen();
-    }
-    
-    function prev() {
-        if (currentScreen > 1) {
-            currentScreen--;
-            renderScreen();
-        }
-    }
-    
-    async function submitQuiz() {
-        // Get user info
-        userInfo.name = document.getElementById('name').value;
-        userInfo.email = document.getElementById('email').value;
-        userInfo.phone = document.getElementById('phone').value || '';
-        
-        if (!userInfo.name || !userInfo.email) {
-            alert('Merci de remplir tous les champs obligatoires');
-            return;
-        }
-        
-        currentScreen++;
-        renderScreen();
-    }
-    
-    function getProtocol() {
-        window.location.href = 'https://oralife.club/protocole';
     }
     
     // Public API
     return {
-        init,
-        start,
-        next,
-        prev,
-        answer,
-        answerNumber,
-        answerDual,
-        updateAnswer,
-        toggleMulti,
-        validateMulti,
-        submitQuiz,
-        getProtocol,
-        renderScreen
+        init: init,
+        next: handleNext,
+        prev: handlePrev,
+        answer: handleAnswer,
+        toggleMulti: handleToggleMulti,
+        calculateIMC: handleCalculateIMC,
+        saveUserInfo: handleSaveUserInfo,
+        submitQuiz: handleSubmitQuiz
     };
+    
+    // Handlers
+    function handleNext() {
+        // Validation
+        const question = questions[currentStep - 1];
+        if (question) {
+            if (question.type === 'number' || question.type === 'dual_input') {
+                if (question.id === 'age' && !answers.age) {
+                    alert('Merci d\'indiquer ton âge');
+                    return;
+                }
+                if (question.id === 'weight_height' && (!answers.weight || !answers.height)) {
+                    alert('Merci d\'indiquer ton poids et ta taille');
+                    return;
+                }
+            }
+            if (question.type === 'multi' && !multiSelections[question.id]?.length) {
+                alert(`Merci de choisir au moins une option`);
+                return;
+            }
+        }
+        
+        currentStep++;
+        renderCurrentStep();
+    }
+    
+    function handlePrev() {
+        if (currentStep > 0) {
+            currentStep--;
+            renderCurrentStep();
+        }
+    }
+    
+    function handleAnswer(key, value) {
+        answers[key] = value;
+    }
+    
+    function handleToggleMulti(questionId, option, max) {
+        if (!multiSelections[questionId]) {
+            multiSelections[questionId] = [];
+        }
+        
+        const selections = multiSelections[questionId];
+        const index = selections.indexOf(option);
+        
+        if (index > -1) {
+            selections.splice(index, 1);
+        } else if (selections.length < max) {
+            selections.push(option);
+        } else {
+            alert(`Tu peux choisir maximum ${max} options`);
+            return;
+        }
+        
+        // Re-render
+        renderCurrentStep();
+    }
+    
+    function handleCalculateIMC() {
+        renderCurrentStep();
+    }
+    
+    function handleSaveUserInfo(key, value) {
+        userInfo[key] = value;
+    }
+    
+    function handleSubmitQuiz() {
+        if (!userInfo.name || !userInfo.email) {
+            alert('Merci de remplir ton prénom et email');
+            return;
+        }
+        
+        currentStep++;
+        renderCurrentStep();
+    }
 })();
 
-// Initialize on load
-document.addEventListener('DOMContentLoaded', function() {
-    Quiz.init();
-});
+// Démarrage au chargement
+document.addEventListener('DOMContentLoaded', Quiz.init);
