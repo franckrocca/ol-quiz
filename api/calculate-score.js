@@ -1,10 +1,13 @@
-// API Endpoint pour le calcul du score biologique
+/**
+ * API Vercel pour le calcul du score biologique
+ * Basé sur les études scientifiques validées
+ */
+
 export default function handler(req, res) {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Credentials', true);
+    // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
     if (req.method === 'OPTIONS') {
         res.status(200).end();
@@ -17,257 +20,180 @@ export default function handler(req, res) {
     
     const { answers } = req.body;
     
-    // Calcul de l'âge biologique
-    const realAge = parseInt(answers.age) || 40;
-    let biologicalAge = realAge;
-    let factors = [];
-    
-    // Analyse détaillée des facteurs
-    
-    // 1. SÉDENTARITÉ (impact majeur)
-    const sittingScore = {
-        '<4h': -1,
-        '4-6h': 0,
-        '6-8h': 1,
-        '8-10h': 2,
-        '>10h': 3
-    };
-    const sittingImpact = sittingScore[answers.sitting_hours] || 0;
-    biologicalAge += sittingImpact;
-    if (sittingImpact >= 2) {
-        factors.push({
-            category: 'sedentarity',
-            icon: '🪑',
-            name: 'Sédentarité toxique',
-            impact: `+${sittingImpact} ans`,
-            description: `${answers.sitting_hours} assis par jour`,
-            solution: 'Pause active toutes les heures'
-        });
+    if (!answers) {
+        return res.status(400).json({ error: 'Missing answers' });
     }
     
-    // 2. SOMMEIL (récupération)
-    const sleepScore = {
-        '<5h': 3,
-        '5-6h': 2,
-        '6-7h': 1,
-        '7-8h': 0,
-        '>8h': 0
-    };
-    const sleepImpact = sleepScore[answers.sleep_hours] || 0;
-    biologicalAge += sleepImpact;
-    if (sleepImpact >= 2) {
-        factors.push({
-            category: 'sleep',
-            icon: '😴',
-            name: 'Dette de sommeil',
-            impact: `+${sleepImpact} ans`,
-            description: `Seulement ${answers.sleep_hours} de sommeil`,
-            solution: 'Routine du soir à optimiser'
-        });
-    }
+    // Calcul du score avec pondération scientifique
+    let score = 50; // Base
+    let penalties = 0;
+    let bonuses = 0;
     
-    // 3. STRESS (inflammation)
-    const stressScore = {
-        'Zen total': -1,
-        'Gérable': 0,
-        'Élevé': 2,
-        'Burnout proche': 3
-    };
-    const stressImpact = stressScore[answers.stress_level] || 0;
-    biologicalAge += stressImpact;
-    if (stressImpact >= 2) {
-        factors.push({
-            category: 'stress',
-            icon: '🔥',
-            name: 'Stress chronique',
-            impact: `+${stressImpact} ans`,
-            description: answers.stress_level,
-            solution: 'Breathwork quotidien nécessaire'
-        });
-    }
+    // TIER 1 - Impact maximal (basé sur études mortalité)
     
-    // 4. ACTIVITÉ PHYSIQUE (protection)
-    const sportScore = {
-        'Jamais': 2,
-        '1 fois': 1,
-        '2-3 fois': 0,
-        '4-5 fois': -1,
-        'Tous les jours': -2
-    };
-    const sportImpact = sportScore[answers.sport_frequency] || 0;
-    biologicalAge += sportImpact;
-    if (sportImpact >= 2) {
-        factors.push({
-            category: 'sport',
-            icon: '🏃',
-            name: 'Zéro activité physique',
-            impact: `+${sportImpact} ans`,
-            description: 'Aucun sport régulier',
-            solution: 'Commencer par 10min/jour'
-        });
-    }
-    
-    // 5. NUTRITION (énergie)
-    const nutritionImpact = calculateNutritionImpact(answers);
-    biologicalAge += nutritionImpact;
-    if (nutritionImpact >= 2) {
-        factors.push({
-            category: 'nutrition',
-            icon: '🍔',
-            name: 'Alimentation déséquilibrée',
-            impact: `+${nutritionImpact} ans`,
-            description: 'Manque de nutriments essentiels',
-            solution: 'Rééquilibrage alimentaire'
-        });
-    }
-    
-    // 6. ALCOOL (toxines)
-    const alcoholScore = {
-        'Jamais': 0,
-        '1-2/semaine': 0,
-        '3-4/semaine': 1,
-        'Tous les jours': 2
-    };
-    const alcoholImpact = alcoholScore[answers.alcohol] || 0;
-    biologicalAge += alcoholImpact;
-    if (alcoholImpact >= 2) {
-        factors.push({
-            category: 'alcohol',
-            icon: '🍷',
-            name: 'Alcool quotidien',
-            impact: `+${alcoholImpact} ans`,
-            description: 'Consommation excessive',
-            solution: 'Réduire progressivement'
-        });
-    }
-    
-    // 7. IMC (métabolisme)
-    if (answers.weight && answers.height) {
-        const imc = answers.weight / ((answers.height/100) ** 2);
-        let imcImpact = 0;
-        if (imc < 18.5) imcImpact = 1;
-        else if (imc > 25 && imc <= 30) imcImpact = 1;
-        else if (imc > 30) imcImpact = 2;
-        
-        biologicalAge += imcImpact;
-        if (imcImpact >= 2) {
-            factors.push({
-                category: 'weight',
-                icon: '⚖️',
-                name: 'Surpoids important',
-                impact: `+${imcImpact} ans`,
-                description: `IMC de ${imc.toFixed(1)}`,
-                solution: 'Plan nutrition personnalisé'
-            });
+    // Sport (VO2 max proxy) - Impact le plus fort
+    if (answers.sport_frequency) {
+        switch(answers.sport_frequency) {
+            case '5+ fois': bonuses += 20; break;
+            case '3-4 fois': bonuses += 15; break;
+            case '2-3 fois': bonuses += 10; break;
+            case '1 fois': bonuses += 5; break;
+            case 'Jamais': penalties += 20; break;
         }
     }
     
-    // Tri des facteurs par impact
-    factors.sort((a, b) => {
-        const impactA = parseInt(a.impact.replace('+', ''));
-        const impactB = parseInt(b.impact.replace('+', ''));
-        return impactB - impactA;
-    });
-    
-    // Garder les 3 principaux
-    factors = factors.slice(0, 3);
-    
-    // Calcul du potentiel
-    const totalNegativeImpact = factors.reduce((sum, f) => {
-        return sum + parseInt(f.impact.replace('+', ''));
-    }, 0);
-    
-    const potential = Math.max(5, totalNegativeImpact + 3);
-    
-    // Détermination du profil
-    let profile = 'standard';
-    if (biologicalAge - realAge >= 5) {
-        profile = 'urgent';
-    } else if (biologicalAge - realAge >= 2) {
-        profile = 'attention';
-    } else if (biologicalAge <= realAge) {
-        profile = 'optimal';
+    // Capacité cardio (3 étages)
+    if (answers.vo2_proxy) {
+        if (answers.vo2_proxy.includes('Impossible')) penalties += 15;
+        else if (answers.vo2_proxy.includes('Très facile')) bonuses += 15;
+        else if (answers.vo2_proxy.includes('Facile')) bonuses += 10;
     }
     
-    // Recommandations personnalisées
-    const recommendations = generateRecommendations(answers, factors, profile);
+    // Sommeil - Fondation de la santé
+    if (answers.sleep_quality) {
+        if (answers.sleep_quality.includes('Excellente')) bonuses += 15;
+        else if (answers.sleep_quality.includes('Bonne')) bonuses += 8;
+        else if (answers.sleep_quality.includes('Très mauvaise')) penalties += 15;
+        else if (answers.sleep_quality.includes('Mauvaise')) penalties += 8;
+    }
     
-    return res.status(200).json({
-        success: true,
-        score: {
-            realAge,
-            biologicalAge,
-            difference: biologicalAge - realAge,
-            profile,
-            factors,
-            potential,
-            recommendations
-        }
-    });
-}
-
-function calculateNutritionImpact(answers) {
-    let impact = 0;
+    // Alcool - Impact direct mortalité
+    if (answers.alcohol) {
+        if (answers.alcohol === '0 (jamais)') bonuses += 15;
+        else if (answers.alcohol === '1-3 verres') bonuses += 5;
+        else if (answers.alcohol === '8-14 verres') penalties += 10;
+        else if (answers.alcohol === '15+ verres') penalties += 20;
+    }
     
-    // Petit-déjeuner
-    if (answers.breakfast === 'Rien/Café' || answers.breakfast === 'Sucré (céréales, pain...)') {
-        impact++;
+    // TIER 2 - Impact fort
+    
+    // Temps assis (étude 2019)
+    if (answers.sitting_hours) {
+        if (answers.sitting_hours === 'Plus de 10h') penalties += 12;
+        else if (answers.sitting_hours === '8-10h') penalties += 8;
+        else if (answers.sitting_hours === 'Moins de 4h') bonuses += 10;
+    }
+    
+    // Stress chronique
+    if (answers.stress_level) {
+        if (answers.stress_level.includes('Extrême')) penalties += 12;
+        else if (answers.stress_level.includes('Élevé')) penalties += 8;
+        else if (answers.stress_level.includes('Très faible')) bonuses += 10;
     }
     
     // Hydratation
-    if (answers.water_intake === '<3' || answers.water_intake === '3-5') {
-        impact++;
+    if (answers.hydration) {
+        if (answers.hydration === 'Plus de 2L') bonuses += 8;
+        else if (answers.hydration === 'Moins de 0.5L') penalties += 10;
     }
     
-    // Digestion
-    if (answers.digestion === 'Problèmes fréquents' || answers.digestion === 'Douleurs chroniques') {
-        impact++;
+    // TIER 3 - Optimisations
+    
+    // Petit-déjeuner
+    if (answers.breakfast) {
+        if (answers.breakfast.includes('Protéiné')) bonuses += 5;
+        else if (answers.breakfast.includes('Sucré')) penalties += 5;
     }
     
-    return impact;
-}
-
-function generateRecommendations(answers, factors, profile) {
-    const recommendations = [];
+    // Légumes
+    if (answers.vegetables) {
+        if (answers.vegetables === '7+') bonuses += 8;
+        else if (answers.vegetables === '0') penalties += 8;
+    }
     
-    // Recommandations basées sur les facteurs principaux
-    factors.forEach(factor => {
-        recommendations.push({
-            priority: 'high',
-            category: factor.category,
-            action: factor.solution,
-            timeframe: 'Immédiat'
+    // Infections (système immunitaire)
+    if (answers.infections_frequency) {
+        if (answers.infections_frequency.includes('Jamais')) bonuses += 8;
+        else if (answers.infections_frequency.includes('Tout le temps')) penalties += 10;
+    }
+    
+    // BONUS SYNERGIQUES (effet multiplicateur)
+    let synergies = 0;
+    
+    // Super Athlete combo
+    if (answers.sport_frequency === '5+ fois' && 
+        answers.daily_steps === 'Plus de 10000' &&
+        answers.recovery === 'Tous les jours') {
+        synergies += 10;
+    }
+    
+    // Clean Living combo
+    if (answers.alcohol === '0 (jamais)' &&
+        answers.sleep_quality && answers.sleep_quality.includes('Excellente') &&
+        answers.meditation === 'Tous les jours') {
+        synergies += 10;
+    }
+    
+    // Calcul final
+    const finalScore = Math.max(0, Math.min(100, score + bonuses - penalties + synergies));
+    
+    // Calcul âge biologique
+    const chronoAge = parseInt(answers.age);
+    const agePenalty = Math.round((100 - finalScore) / 10);
+    const biologicalAge = chronoAge + agePenalty - 5;
+    
+    // Identification des priorités
+    const priorities = [];
+    
+    if (answers.sport_frequency === 'Jamais' || answers.sport_frequency === '1 fois') {
+        priorities.push({
+            title: '🏃 Activité physique insuffisante',
+            impact: '-3 ans d\'espérance de vie',
+            solution: 'Commencer par 2x20min/semaine de marche rapide'
         });
+    }
+    
+    if (answers.sleep_quality && (answers.sleep_quality.includes('Mauvaise') || answers.sleep_quality.includes('Très mauvaise'))) {
+        priorities.push({
+            title: '😴 Sommeil non récupérateur',
+            impact: '-2 ans + risque cognitif',
+            solution: 'Routine du soir : pas d\'écran 1h avant + magnésium'
+        });
+    }
+    
+    if (answers.sitting_hours === 'Plus de 10h' || answers.sitting_hours === '8-10h') {
+        priorities.push({
+            title: '🪑 Trop de temps assis',
+            impact: '+34% mortalité',
+            solution: 'Timer 25/5 : 25min assis, 5min debout/marche'
+        });
+    }
+    
+    if (answers.hydration === 'Moins de 0.5L' || answers.hydration === '0.5-1L') {
+        priorities.push({
+            title: '💧 Déshydratation chronique',
+            impact: '-20% performance cognitive',
+            solution: 'Bouteille de 1L visible, à finir 2x/jour'
+        });
+    }
+    
+    if (answers.stress_level && answers.stress_level.includes('Extrême')) {
+        priorities.push({
+            title: '🧠 Stress chronique',
+            impact: 'Vieillissement accéléré +3 ans',
+            solution: 'Cohérence cardiaque 3x5min/jour'
+        });
+    }
+    
+    // Limiter à 3 priorités
+    const topPriorities = priorities.slice(0, 3);
+    
+    // Si pas assez de priorités, ajouter des génériques
+    if (topPriorities.length < 3) {
+        topPriorities.push({
+            title: '🥬 Optimiser la nutrition',
+            impact: 'Inflammation chronique',
+            solution: 'Plus de légumes, moins de transformé'
+        });
+    }
+    
+    res.status(200).json({
+        score: finalScore,
+        biologicalAge: Math.max(18, biologicalAge),
+        chronologicalAge: chronoAge,
+        priorities: topPriorities,
+        level: finalScore >= 80 ? 'Excellence' : 
+               finalScore >= 65 ? 'Bon' :
+               finalScore >= 50 ? 'Moyen' : 'À améliorer'
     });
-    
-    // Recommandations additionnelles selon le profil
-    if (profile === 'urgent') {
-        recommendations.push({
-            priority: 'critical',
-            category: 'coaching',
-            action: 'Accompagnement personnalisé recommandé',
-            timeframe: 'Cette semaine'
-        });
-    }
-    
-    // Quick wins
-    if (answers.phone_morning === 'Immédiatement') {
-        recommendations.push({
-            priority: 'medium',
-            category: 'morning',
-            action: 'Attendre 30min avant le téléphone',
-            timeframe: 'Dès demain'
-        });
-    }
-    
-    if (answers.cold_exposure === 'Jamais') {
-        recommendations.push({
-            priority: 'medium',
-            category: 'recovery',
-            action: 'Terminer douche par 30s d\'eau froide',
-            timeframe: 'Cette semaine'
-        });
-    }
-    
-    return recommendations.slice(0, 5);
 }
