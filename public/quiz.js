@@ -4,7 +4,7 @@ const Quiz = (function() {
     
     // Configuration
     const API_URL = '/api/calculate-score';
-    const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwa_F2dIfYfpEqsX5kWQ5wMlabyHMDtuEWHmQD23IEJuh9Foe_WdbOArFBFaM51Vo6i/exec';
+    const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwjyAjH9Nl6y2IeRWHi5Qrr6ftqVilH4T9RMPAdNXM_XYVuaN0WFzrPPYwVL8oOZR0W/exec';
     
     // État global
     let currentScreen = 0;
@@ -1291,4 +1291,5 @@ const Quiz = (function() {
 document.addEventListener('DOMContentLoaded', function() {
     Quiz.init();
 });
+
 
