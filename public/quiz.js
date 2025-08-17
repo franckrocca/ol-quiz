@@ -1115,4 +1115,180 @@ const Quiz = (function() {
                     
                     <div class="risk-analysis">
                         <h3>📊 TENDANCE BASÉE SUR TES RÉPONSES</h3>
-                        <div class="risk-stat
+                        <div class="risk-stat">+12 ans</div>
+                        <p class="risk-text">
+                            Si tu ne changes rien, ton vieillissement biologique continuera d'accélérer.
+                            <br><br>
+                            <strong>MAIS</strong> avec les bons protocoles, tu peux inverser la tendance en 12 semaines.
+                        </p>
+                    </div>
+                    
+                    <div class="attention-points">
+                        <h4>⚠️ TES 3 AXES PRIORITAIRES :</h4>
+                        <ul>
+                            ${result.priorities ? result.priorities.map(p => `<li>${p}</li>`).join('') : `
+                            <li>Hydratation : Passe à 2.5L d'eau pure/jour</li>
+                            <li>Sommeil : Vise 7-9h de qualité chaque nuit</li>
+                            <li>Mouvement : Pause active toutes les heures</li>
+                            `}
+                        </ul>
+                    </div>
+                </div>
+                
+                <button class="btn-primary" onclick="window.open('https://calendly.com/oralife/consultation', '_blank')">
+                    RÉSERVER MA CONSULTATION GRATUITE →
+                </button>
+                
+                <p style="text-align: center; font-size: 14px; color: var(--text-light); margin-top: 25px;">
+                    📧 Ton analyse complète a été envoyée à <strong>${userInfo.email}</strong><br>
+                    <small>(Vérifie tes spams si tu ne la reçois pas dans 5 minutes)</small>
+                </p>
+            </div>
+        `;
+        document.getElementById('quiz-container').innerHTML = html;
+    }
+    
+    // Actions functions
+    function answer(id, value) {
+        answers[id] = value;
+        next();
+    }
+    
+    function answerNumber(id) {
+        const value = document.getElementById(id).value;
+        if (value) {
+            answers[id] = value;
+            next();
+        } else {
+            alert('Merci de remplir ce champ');
+        }
+    }
+    
+    function answerDual() {
+        const weight = document.getElementById('weight').value;
+        const height = document.getElementById('height').value;
+        
+        if (weight && height) {
+            answers.weight = weight;
+            answers.height = height;
+            next();
+        } else {
+            alert('Merci de remplir les deux champs');
+        }
+    }
+    
+    function toggleMulti(id, value) {
+        if (!multiAnswers[id]) multiAnswers[id] = [];
+        
+        const q = questions.find(q => q.id === id);
+        const maxSelections = q.max === 'unlimited' ? 999 : q.max;
+        
+        // Si "Aucun" est sélectionné, désélectionner tout
+        if (value === 'Aucun' || value === 'Aucune activité') {
+            multiAnswers[id] = [value];
+            document.querySelectorAll(`.option.multi[data-question="${id}"]`).forEach(el => {
+                el.classList.remove('selected');
+                if (el.textContent === value) {
+                    el.classList.add('selected');
+                }
+            });
+            return;
+        }
+        
+        // Si on sélectionne autre chose, enlever "Aucun"
+        if (multiAnswers[id].includes('Aucun') || multiAnswers[id].includes('Aucune activité')) {
+            multiAnswers[id] = [];
+            document.querySelectorAll(`.option.multi[data-question="${id}"]`).forEach(el => {
+                if (el.textContent === 'Aucun' || el.textContent === 'Aucune activité') {
+                    el.classList.remove('selected');
+                }
+            });
+        }
+        
+        const idx = multiAnswers[id].indexOf(value);
+        
+        if (idx > -1) {
+            multiAnswers[id].splice(idx, 1);
+        } else if (multiAnswers[id].length < maxSelections) {
+            multiAnswers[id].push(value);
+        } else if (q.max !== 'unlimited') {
+            alert(`Tu peux choisir maximum ${maxSelections} options`);
+            return;
+        }
+        
+        // Update UI
+        document.querySelectorAll(`.option.multi[data-question="${id}"]`).forEach(el => {
+            if (multiAnswers[id].includes(el.textContent)) {
+                el.classList.add('selected');
+            } else {
+                el.classList.remove('selected');
+            }
+        });
+    }
+    
+    function validateMulti(id) {
+        if (multiAnswers[id] && multiAnswers[id].length > 0) {
+            answers[id] = multiAnswers[id];
+            next();
+        } else {
+            alert('Merci de choisir au moins une option');
+        }
+    }
+    
+    function next() {
+        currentScreen++;
+        renderScreen();
+    }
+    
+    function prev() {
+        currentScreen--;
+        renderScreen();
+    }
+    
+    function updateProgressBar() {
+        const progress = (currentScreen / screenFlow.length) * 100;
+        const progressBar = document.getElementById('progressBar');
+        if (progressBar) {
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+        }
+    }
+    
+    function updateProgressText() {
+        const progressText = document.getElementById('progress-text');
+        if (progressText) {
+            if (currentScreen === 0) {
+                progressText.textContent = 'Prêt à commencer';
+            } else if (currentScreen < 10) {
+                progressText.textContent = 'Début du test...';
+            } else if (currentScreen < 20) {
+                progressText.textContent = 'Tu progresses bien !';
+            } else if (currentScreen < 30) {
+                progressText.textContent = 'Continue comme ça !';
+            } else if (currentScreen < 40) {
+                progressText.textContent = 'Presque fini !';
+            } else {
+                progressText.textContent = 'Dernières questions !';
+            }
+        }
+    }
+    
+    // Public API
+    return {
+        init,
+        start,
+        next,
+        prev,
+        answer,
+        answerNumber,
+        answerDual,
+        toggleMulti,
+        validateMulti,
+        renderScreen
+    };
+})();
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    Quiz.init();
+});
+
