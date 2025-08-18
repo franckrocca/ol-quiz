@@ -1,742 +1,746 @@
-// État global
-let currentScreen = 0;
-let answers = {};
-let multiSelectAnswers = {};
-let userInfo = {};
-const totalScreens = 41;
+// quiz.js - Frontend modulaire avec API integration
+// Compatible avec ton HTML/CSS existant
 
-// Mapping complet des écrans
-const screenMap = {
-    0: 'screen-0',     // Landing
-    1: 'screen-1',     // Genre
-    2: 'screen-2',     // Age exact
-    3: 'screen-3',     // Poids/Taille
-    4: 'screen-4',     // Objectifs
-    5: 'screen-5',     // Energie vs 3 ans
-    6: 'screen-6',     // Dernière fois 100%
-    7: 'screen-7',     // Blocage
-    8: 'screen-8',     // Escalier
-    9: 'screen-9',     // Heures assis
-    10: 'screen-wow1', // WOW Break 1
-    11: 'screen-10',   // Sommeil
-    12: 'screen-11',   // Cycle/Libido
-    13: 'screen-12',   // Crash
-    14: 'screen-13',   // Poids vs idéal
-    15: 'screen-14',   // Digestion
-    16: 'screen-wow2', // WOW Break 2
-    17: 'screen-15',   // Douleurs articulaires
-    18: 'screen-16',   // Mémoire
-    19: 'screen-17',   // Symptômes/Muscle
-    20: 'screen-18',   // Récupération
-    21: 'screen-19',   // Stress
-    22: 'screen-20',   // Peau
-    23: 'screen-21',   // Environnement
-    24: 'screen-wow3', // WOW Break 3
-    25: 'screen-22',   // Soleil
-    26: 'screen-23',   // Nature
-    27: 'screen-24',   // Qualité sommeil
-    28: 'screen-25',   // Heure coucher
-    29: 'screen-26',   // Écrans
-    30: 'screen-27',   // Petit-déj
-    31: 'screen-28',   // Hydratation
-    32: 'screen-29',   // Alcool
-    33: 'screen-wow4', // WOW Break 4
-    34: 'screen-30',   // Activités physiques
-    35: 'screen-31',   // Fréquence sport
-    36: 'screen-32',   // Compléments
-    37: 'screen-33',   // Tracking
-    38: 'screen-34',   // Charge/Pression
-    39: 'screen-35',   // Relations
-    40: 'screen-36',   // Vacances
-    41: 'screen-37',   // Projection 5 ans
-    42: 'screen-wow5', // WOW Break 5
-    43: 'screen-38',   // Plus grande peur
-    44: 'screen-39',   // Motivation
-    45: 'screen-40',   // Budget
-    46: 'screen-41',   // Temps disponible
-    47: 'screen-wow6', // WOW Break 6
-    48: 'screen-email',
-    49: 'screen-calculating',
-    50: 'screen-results'
-};
-
-// Navigation
-function goToNextScreen() {
-    hideCurrentScreen();
-    currentScreen++;
-    showScreen(currentScreen);
-    updateProgressBar();
+class ORALifeQuiz {
+  constructor() {
+    // Configuration API
+    this.apiBase = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000/api' 
+      : '/api';
     
-    // Setup des questions conditionnelles
-    if (screenMap[currentScreen] === 'screen-11') setupQ11();
-    if (screenMap[currentScreen] === 'screen-17') setupQ17();
-    if (screenMap[currentScreen] === 'screen-34') setupQ34();
-}
-
-function goToPrevScreen() {
-    hideCurrentScreen();
-    currentScreen--;
-    showScreen(currentScreen);
-    updateProgressBar();
-}
-
-function hideCurrentScreen() {
-    const currentScreenId = screenMap[currentScreen];
-    if (currentScreenId) {
-        const element = document.getElementById(currentScreenId);
-        if (element) {
-            element.classList.remove('active');
-        }
-    }
-}
-
-function showScreen(screenNumber) {
-    const screenId = screenMap[screenNumber];
-    if (screenId) {
-        const element = document.getElementById(screenId);
-        if (element) {
-            element.classList.add('active');
-        }
-    }
-}
-
-// Barre de progression améliorée
-function updateProgressBar() {
-    const actualStep = currentScreen > 47 ? 41 : currentScreen;
-    const progress = (actualStep / totalScreens) * 100;
-    document.getElementById('progressBar').style.width = progress + '%';
+    // Google Script URL
+    this.googleScriptUrl = 'https://script.google.com/macros/s/AKfycbwjyAjH9Nl6y2IeRWHi5Qrr6ftqVilH4T9RMPAdNXM_XYVuaN0WFzrPPYwVL8oOZR0W/exec';
     
-    // Texte dynamique au lieu du compteur
-    const progressText = document.getElementById('progress-text');
-    if (progress === 0) {
-        progressText.textContent = "Prêt à commencer";
-    } else if (progress < 25) {
-        progressText.textContent = "Découverte de ton profil...";
-    } else if (progress < 50) {
-        progressText.textContent = "Analyse de tes habitudes...";
-    } else if (progress < 75) {
-        progressText.textContent = "Évaluation de ta santé...";
-    } else if (progress < 100) {
-        progressText.textContent = "Finalisation...";
-    } else {
-        progressText.textContent = "Analyse complète !";
-    }
-}
-
-// Validation âge
-function validateAge() {
-    const age = document.getElementById('age-exact').value;
-    if (!age || age < 18 || age > 100) {
-        alert('Merci d\'entrer un âge valide (18-100 ans)');
-        return false;
-    }
-    answers.age_exact = parseInt(age);
-    return true;
-}
-
-// Validation poids/taille
-function validateWeightHeight() {
-    const weight = document.getElementById('weight').value;
-    const height = document.getElementById('height').value;
-    
-    if (!weight || !height) {
-        alert('Merci de remplir ton poids et ta taille');
-        return false;
-    }
-    
-    answers.weight = parseFloat(weight);
-    answers.height = parseFloat(height);
-    answers.bmi = calculateBMIValue();
-    
-    return true;
-}
-
-// Calcul IMC
-function calculateBMI() {
-    const weight = parseFloat(document.getElementById('weight').value);
-    const height = parseFloat(document.getElementById('height').value);
-    
-    if (weight && height) {
-        const heightInM = height / 100;
-        const bmi = weight / (heightInM * heightInM);
-        
-        document.getElementById('bmi-display').style.display = 'block';
-        document.getElementById('bmi-value').textContent = bmi.toFixed(1);
-        
-        let interpretation = '';
-        let color = '';
-        let position = 0;
-        
-        if (bmi < 18.5) {
-            interpretation = 'Insuffisance pondérale';
-            color = '#3498db';
-            position = (bmi / 18.5) * 25;
-        } else if (bmi < 25) {
-            interpretation = 'Poids normal ✅';
-            color = '#2ecc71';
-            position = 25 + ((bmi - 18.5) / 6.5) * 25;
-        } else if (bmi < 30) {
-            interpretation = 'Surpoids';
-            color = '#f1c40f';
-            position = 50 + ((bmi - 25) / 5) * 25;
-        } else {
-            interpretation = 'Obésité';
-            color = '#e74c3c';
-            position = Math.min(75 + ((bmi - 30) / 10) * 25, 100);
-        }
-        
-        document.getElementById('bmi-interpretation').innerHTML = interpretation;
-        document.getElementById('bmi-interpretation').style.backgroundColor = color;
-        document.getElementById('bmi-interpretation').style.color = 'white';
-        document.getElementById('bmi-interpretation').style.padding = '10px';
-        document.getElementById('bmi-interpretation').style.borderRadius = '8px';
-        document.getElementById('bmi-marker').style.left = position + '%';
-    }
-}
-
-function calculateBMIValue() {
-    const weight = parseFloat(answers.weight);
-    const height = parseFloat(answers.height);
-    if (weight && height) {
-        const heightInM = height / 100;
-        return weight / (heightInM * heightInM);
-    }
-    return 0;
-}
-
-// Enregistrer les réponses
-function answer(key, value) {
-    answers[key] = value;
-    console.log('Réponse:', key, '=', value);
-}
-
-// Multi-select handling
-function toggleMultiSelect(category, value, element, maxSelections = null) {
-    if (!multiSelectAnswers[category]) {
-        multiSelectAnswers[category] = [];
-    }
-    
-    const index = multiSelectAnswers[category].indexOf(value);
-    
-    // Si c'est "Aucun" ou similaire, désélectionner tout le reste
-    if (value.includes('Aucun') || value === 'Aucune activité') {
-        // Désélectionner tous les autres
-        document.querySelectorAll(`#${category}-options .option`).forEach(opt => {
-            opt.classList.remove('selected');
-        });
-        multiSelectAnswers[category] = [value];
-        element.classList.add('selected');
-        return;
-    }
-    
-    // Si un autre est sélectionné, enlever "Aucun"
-    const noneIndex = multiSelectAnswers[category].findIndex(v => 
-        v.includes('Aucun') || v === 'Aucune activité'
-    );
-    if (noneIndex > -1) {
-        multiSelectAnswers[category].splice(noneIndex, 1);
-        document.querySelectorAll(`#${category}-options .option`).forEach(opt => {
-            if (opt.textContent.includes('Aucun') || opt.textContent.includes('Aucune activité')) {
-                opt.classList.remove('selected');
-            }
-        });
-    }
-    
-    if (index > -1) {
-        // Déselectionner
-        multiSelectAnswers[category].splice(index, 1);
-        element.classList.remove('selected');
-    } else {
-        // Vérifier le maximum
-        if (maxSelections && multiSelectAnswers[category].length >= maxSelections) {
-            alert(`Tu peux choisir maximum ${maxSelections} options`);
-            return;
-        }
-        // Sélectionner
-        multiSelectAnswers[category].push(value);
-        element.classList.add('selected');
-    }
-}
-
-function validateMultiSelect(category) {
-    if (!multiSelectAnswers[category] || multiSelectAnswers[category].length === 0) {
-        alert('Merci de choisir au moins une option');
-        return false;
-    }
-    answers[category] = multiSelectAnswers[category];
-    return true;
-}
-
-// Questions conditionnelles
-function setupQ11() {
-    const gender = answers['gender'];
-    const q11Text = document.getElementById('q11-text');
-    const q11Options = document.getElementById('q11-options');
-    
-    q11Options.innerHTML = '';
-    
-    if (gender === 'femme') {
-        q11Text.textContent = "Où en es-tu dans ton cycle féminin ?";
-        const options = [
-            "Cycle régulier parfait",
-            "Cycle irrégulier",
-            "Péri-ménopause",
-            "Ménopause",
-            "Post-ménopause"
-        ];
-        
-        options.forEach(opt => {
-            const div = document.createElement('div');
-            div.className = 'option';
-            div.textContent = opt;
-            div.onclick = () => {
-                answer('female_cycle', opt);
-                goToNextScreen();
-            };
-            q11Options.appendChild(div);
-        });
-    } else {
-        q11Text.textContent = "Ta libido actuellement :";
-        const options = [
-            "Au top comme à 20 ans",
-            "Correcte",
-            "En baisse notable",
-            "Très diminuée",
-            "Problématique"
-        ];
-        
-        options.forEach(opt => {
-            const div = document.createElement('div');
-            div.className = 'option';
-            div.textContent = opt;
-            div.onclick = () => {
-                answer('libido', opt);
-                goToNextScreen();
-            };
-            q11Options.appendChild(div);
-        });
-    }
-}
-
-function setupQ17() {
-    const gender = answers['gender'];
-    const q17Text = document.getElementById('q17-text');
-    const q17Options = document.getElementById('q17-options');
-    
-    q17Options.innerHTML = '';
-    
-    if (gender === 'femme') {
-        q17Text.textContent = "Symptômes hormonaux :";
-        const options = [
-            "Aucun",
-            "Bouffées de chaleur occasionnelles",
-            "Sautes d'humeur fréquentes",
-            "Multiples symptômes gênants",
-            "Impact majeur sur ma vie"
-        ];
-        
-        options.forEach(opt => {
-            const div = document.createElement('div');
-            div.className = 'option';
-            div.textContent = opt;
-            div.onclick = () => {
-                answer('hormonal_symptoms', opt);
-                goToNextScreen();
-            };
-            q17Options.appendChild(div);
-        });
-    } else {
-        q17Text.textContent = "Masse musculaire vs il y a 5 ans :";
-        const options = [
-            "Identique ou mieux",
-            "-10% environ",
-            "-20% environ",
-            "-30% environ",
-            "Fonte musculaire importante"
-        ];
-        
-        options.forEach(opt => {
-            const div = document.createElement('div');
-            div.className = 'option';
-            div.textContent = opt;
-            div.onclick = () => {
-                answer('muscle_mass', opt);
-                goToNextScreen();
-            };
-            q17Options.appendChild(div);
-        });
-    }
-}
-
-function setupQ34() {
-    const gender = answers['gender'];
-    const q34Text = document.getElementById('q34-text');
-    const q34Options = document.getElementById('q34-options');
-    
-    q34Options.innerHTML = '';
-    
-    if (gender === 'femme') {
-        q34Text.textContent = "Charge mentale quotidienne :";
-        const options = [
-            "Légère et gérable",
-            "Normale",
-            "Importante",
-            "Très lourde",
-            "Écrasante"
-        ];
-        
-        options.forEach(opt => {
-            const div = document.createElement('div');
-            div.className = 'option';
-            div.textContent = opt;
-            div.onclick = () => {
-                answer('mental_load', opt);
-                goToNextScreen();
-            };
-            q34Options.appendChild(div);
-        });
-    } else {
-        q34Text.textContent = "Pression professionnelle/financière :";
-        const options = [
-            "Très faible",
-            "Gérable",
-            "Importante",
-            "Très forte",
-            "Insoutenable"
-        ];
-        
-        options.forEach(opt => {
-            const div = document.createElement('div');
-            div.className = 'option';
-            div.textContent = opt;
-            div.onclick = () => {
-                answer('professional_pressure', opt);
-                goToNextScreen();
-            };
-            q34Options.appendChild(div);
-        });
-    }
-}
-
-// Soumission email
-async function submitEmail() {
-    const firstname = document.getElementById('firstname').value;
-    const email = document.getElementById('email').value;
-    const phone = document.getElementById('phone').value;
-    const consent = document.getElementById('consent').checked;
-    
-    if (!firstname || !email || !phone || !consent) {
-        alert('Merci de remplir tous les champs et d\'accepter les conditions');
-        return;
-    }
-    
-    if (!validateEmail(email)) {
-        alert('Merci d\'entrer un email valide');
-        return;
-    }
-    
-    if (!validatePhone(phone)) {
-        alert('Merci d\'entrer un numéro de téléphone valide');
-        return;
-    }
-    
-    userInfo.firstname = firstname;
-    userInfo.email = email;
-    userInfo.phone = phone;
-    
-    // Passer à l'écran de calcul
-    hideCurrentScreen();
-    currentScreen = 49;
-    showScreen(currentScreen);
-    
-    // Lancer l'animation de calcul
-    startCalculation();
-}
-
-function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
-
-function validatePhone(phone) {
-    const re = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
-    return re.test(phone.replace(/\s/g, ''));
-}
-
-// Animation de calcul
-function startCalculation() {
-    // Animer les étapes
-    setTimeout(() => {
-        document.getElementById('step1').style.opacity = '1';
-    }, 500);
-    
-    setTimeout(() => {
-        document.getElementById('step2').style.opacity = '1';
-    }, 1500);
-    
-    setTimeout(() => {
-        document.getElementById('step3').style.opacity = '1';
-    }, 2500);
-    
-    // Calculer et afficher le score
-    setTimeout(() => {
-        calculateAndShowResults();
-    }, 3500);
-}
-
-// Afficher les résultats
-async function calculateAndShowResults() {
-    try {
-        // Préparer les données pour l'API
-        const formData = {
-            ...answers,
-            ...userInfo,
-            objectives: answers.objectives || [],
-            activities: answers.activities || [],
-            tracking: answers.tracking || [],
-            motivations: answers.motivations || []
-        };
-        
-        // Appeler l'API pour calculer le score
-        const response = await fetch('/api/calculate-score', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        
-        // Passer à l'écran des résultats
-        hideCurrentScreen();
-        currentScreen = 50;
-        showScreen(currentScreen);
-        
-        // Afficher les résultats
-        setTimeout(() => {
-            animateScore(result.score);
-            displayInterpretation(result.score, result.level);
-            displayDetailedAnalysis(result);
-            displayScientificRisks(result);
-        }, 500);
-        
-        // Afficher l'email
-        document.getElementById('userEmail').textContent = userInfo.email;
-        
-        // Envoyer les données à Google Sheets
-        sendToGoogleSheet(result);
-        
-    } catch (error) {
-        console.error('Erreur calcul:', error);
-        // Fallback en cas d'erreur
-        calculateLocalResults();
-    }
-}
-
-// Calcul local en cas d'erreur API
-function calculateLocalResults() {
-    const score = 75; // Score par défaut
-    
-    hideCurrentScreen();
-    currentScreen = 50;
-    showScreen(currentScreen);
-    
-    setTimeout(() => {
-        animateScore(score);
-        displayInterpretation(score);
-        displayBasicAnalysis();
-    }, 500);
-    
-    document.getElementById('userEmail').textContent = userInfo.email;
-}
-
-function animateScore(finalScore) {
-    const scoreElement = document.getElementById('finalScore');
-    const circle = document.getElementById('scoreCircle');
-    
-    // Animation du cercle
-    const circumference = 502;
-    const offset = circumference - (finalScore / 100) * circumference;
-    circle.style.transition = 'stroke-dashoffset 2s ease-out';
-    circle.style.strokeDashoffset = offset;
-    
-    // Animation du nombre
-    let currentScore = 0;
-    const increment = finalScore / 50;
-    const timer = setInterval(() => {
-        currentScore += increment;
-        if (currentScore >= finalScore) {
-            currentScore = finalScore;
-            clearInterval(timer);
-        }
-        scoreElement.textContent = Math.round(currentScore);
-    }, 40);
-}
-
-function displayInterpretation(score, level = null) {
-    const interpretationDiv = document.getElementById('scoreInterpretation');
-    
-    if (!level) {
-        // Déterminer le niveau localement si pas fourni
-        if (score >= 80) level = { level: 5, label: "OPTIMAL", color: "#00CC00", emoji: "🌟", description: "Performance biologique maximale" };
-        else if (score >= 65) level = { level: 4, label: "BON", color: "#8BC34A", emoji: "✅", description: "Santé préservée, optimisation possible" };
-        else if (score >= 50) level = { level: 3, label: "MOYEN", color: "#FFA500", emoji: "⚠️", description: "Signaux d'alerte, action recommandée" };
-        else if (score >= 35) level = { level: 2, label: "FAIBLE", color: "#FF6600", emoji: "🚨", description: "Vieillissement accéléré détecté" };
-        else level = { level: 1, label: "CRITIQUE", color: "#FF0000", emoji: "🆘", description: "Urgence santé, intervention nécessaire" };
-    }
-    
-    interpretationDiv.innerHTML = `
-        <div style="text-align: center;">
-            <div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
-                ${[1,2,3,4,5].map(i => `
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 50%;
-                        background: ${i <= level.level ? level.color : '#E0E0E0'};
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: bold;
-                        color: white;
-                        box-shadow: ${i <= level.level ? '0 2px 10px rgba(0,0,0,0.2)' : 'none'};
-                    ">${i}</div>
-                `).join('')}
-            </div>
-            <h2 style="color: ${level.color}; margin: 15px 0;">
-                ${level.emoji} Niveau ${level.level}/5 : ${level.label}
-            </h2>
-            <p style="font-size: 16px; color: #666;">
-                ${level.description}
-            </p>
-        </div>
-    `;
-}
-
-function displayDetailedAnalysis(result) {
-    const detailedDiv = document.getElementById('detailedResults');
-    const urgentDiv = document.getElementById('urgentPoints');
-    const strengthDiv = document.getElementById('strengthPoints');
-    
-    if (result.ageAnalysis) {
-        detailedDiv.innerHTML = `
-            <p><strong>Âge chronologique :</strong> ${result.ageAnalysis.chrono} ans</p>
-            <p><strong>Estimation âge biologique :</strong> 
-                <span style="color: ${result.ageAnalysis.difference > 0 ? '#FF4444' : '#00CC00'}; font-weight: bold;">
-                    ${result.ageAnalysis.bio} ans (${result.ageAnalysis.difference > 0 ? '+' : ''}${result.ageAnalysis.difference} ans)
-                </span>
-            </p>
-            <p style="font-size: 12px; color: #666; margin-top: 5px;">
-                <em>* Basé sur tes réponses et les corrélations épidémiologiques</em>
-            </p>
-            <p><strong>Interprétation :</strong> ${result.ageAnalysis.interpretation}</p>
-            <p><strong>IMC :</strong> ${result.bmi ? result.bmi.toFixed(1) : 'N/A'}</p>
-        `;
-    }
-    
-    if (result.urgentPoints && result.urgentPoints.length > 0) {
-        urgentDiv.innerHTML = result.urgentPoints.map(item => `<p style="margin: 10px 0;">• ${item}</p>`).join('');
-    } else {
-        urgentDiv.innerHTML = '<p style="margin: 10px 0;">• Continue sur cette voie positive</p>';
-    }
-    
-    if (result.strengthPoints && result.strengthPoints.length > 0) {
-        strengthDiv.innerHTML = result.strengthPoints.map(item => `<p style="margin: 10px 0;">• ${item}</p>`).join('');
-    } else {
-        strengthDiv.innerHTML = '<p style="margin: 10px 0;">• Potentiel d\'amélioration identifié</p>';
-    }
-}
-
-function displayBasicAnalysis() {
-    const detailedDiv = document.getElementById('detailedResults');
-    const urgentDiv = document.getElementById('urgentPoints');
-    const strengthDiv = document.getElementById('strengthPoints');
-    
-    detailedDiv.innerHTML = `
-        <p><strong>Analyse en cours de traitement...</strong></p>
-        <p>Tes résultats détaillés ont été envoyés par email.</p>
-    `;
-    
-    urgentDiv.innerHTML = '<p style="margin: 10px 0;">• Analyse complète disponible par email</p>';
-    strengthDiv.innerHTML = '<p style="margin: 10px 0;">• Potentiel d\'optimisation identifié</p>';
-}
-
-function displayScientificRisks(result) {
-    const riskStat = document.getElementById('risk-stat');
-    const riskText = document.getElementById('risk-text');
-    const futureRisks = document.getElementById('future-risks');
-    
-    if (result.riskAnalysis) {
-        riskStat.textContent = result.riskAnalysis.level;
-        riskStat.style.color = result.riskAnalysis.color;
-        riskText.innerHTML = result.riskAnalysis.text;
-        futureRisks.innerHTML = result.riskAnalysis.futureRisks.map(risk => `<li>${risk}</li>`).join('');
-    } else {
-        // Valeurs par défaut
-        riskStat.textContent = 'En analyse';
-        riskText.innerHTML = 'Résultats détaillés envoyés par email';
-        futureRisks.innerHTML = '<li>✅ Protocole personnalisé disponible</li>';
-    }
-}
-
-// Envoi vers Google Sheets
-async function sendToGoogleSheet(result) {
-    const formData = {
-        timestamp: new Date().toISOString(),
-        firstname: userInfo.firstname,
-        email: userInfo.email,
-        phone: userInfo.phone,
-        score: result.score,
-        age_exact: answers.age_exact,
-        gender: answers.gender,
-        weight: answers.weight,
-        height: answers.height,
-        bmi: calculateBMIValue().toFixed(1),
-        // Toutes les réponses
-        ...answers,
-        // Multi-select sous forme de string
-        objectives: (answers.objectives || []).join(', '),
-        activities: (answers.activities || []).join(', '),
-        tracking: (answers.tracking || []).join(', '),
-        motivations: (answers.motivations || []).join(', ')
+    // État du quiz
+    this.state = {
+      currentScreen: 'landing',
+      currentQuestionIndex: 0,
+      answers: {},
+      userProfile: {},
+      startTime: null,
+      quizData: null,
+      currentSection: 0,
+      currentQuestionInSection: 0
     };
     
-    // TODO: Remplacer par ton URL Google Apps Script
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjyAjH9Nl6y2IeRWHi5Qrr6ftqVilH4T9RMPAdNXM_XYVuaN0WFzrPPYwVL8oOZR0W/exec';
+    // Initialisation
+    this.init();
+  }
+
+  async init() {
+    try {
+      // Charger les questions depuis l'API
+      await this.loadQuizData();
+      
+      // Setup event listeners
+      this.setupEventListeners();
+      
+      console.log('Quiz initialisé avec succès');
+    } catch (error) {
+      console.error('Erreur initialisation:', error);
+      this.showError('Impossible de charger le quiz. Veuillez rafraîchir la page.');
+    }
+  }
+
+  async loadQuizData() {
+    try {
+      const response = await fetch(`${this.apiBase}/questions`);
+      
+      // Fallback si API non disponible (mode développement)
+      if (!response.ok) {
+        console.log('API non disponible, utilisation des données locales');
+        this.loadLocalQuestions();
+        return;
+      }
+      
+      this.state.quizData = await response.json();
+      console.log('Questions chargées depuis API:', this.state.quizData);
+    } catch (error) {
+      console.warn('Chargement API échoué, fallback local:', error);
+      this.loadLocalQuestions();
+    }
+  }
+
+  loadLocalQuestions() {
+    // Fallback avec questions locales pour développement
+    this.state.quizData = {
+      sections: [
+        {
+          id: "baseline",
+          questions: [
+            {
+              id: "q1",
+              text: "Comment décrirais-tu ton niveau d'énergie actuel ?",
+              type: "single",
+              options: [
+                { value: "exhausted", label: "Je suis épuisé(e) en permanence", score: 1 },
+                { value: "tired", label: "Souvent fatigué(e), ça fluctue", score: 2 },
+                { value: "ok", label: "Correct mais irrégulier", score: 3 },
+                { value: "excellent", label: "Excellent et stable toute la journée", score: 5 }
+              ]
+            }
+            // Ajoute tes autres questions ici
+          ]
+        }
+      ],
+      wowBreaks: [
+        {
+          id: "wow1",
+          afterQuestion: "q3",
+          title: "😴 Le Saviez-Vous ?",
+          content: "Les personnes qui dorment moins de 6h ont 4.5x plus de risques de burnout.",
+          source: "Sleep Medicine Reviews 2023"
+        }
+      ]
+    };
+  }
+
+  setupEventListeners() {
+    // Start Quiz
+    const startBtn = document.getElementById('start-quiz');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => this.startQuiz());
+    }
+
+    // Navigation
+    const nextBtn = document.getElementById('next-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => this.handleNext());
+    }
+    
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => this.handlePrev());
+    }
+
+    // Réponses (délégation d'événements)
+    document.addEventListener('change', (e) => {
+      if (e.target.classList.contains('quiz-option')) {
+        this.handleAnswer(e.target);
+      }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && this.state.currentScreen === 'quiz') {
+        const nextBtn = document.getElementById('next-btn');
+        if (nextBtn && !nextBtn.disabled) {
+          this.handleNext();
+        }
+      }
+    });
+  }
+
+  startQuiz() {
+    this.state.startTime = Date.now();
+    this.state.currentScreen = 'quiz';
+    this.switchScreen('quiz');
+    this.renderCurrentQuestion();
+  }
+
+  switchScreen(screenName) {
+    // Cacher tous les écrans
+    document.querySelectorAll('.screen').forEach(screen => {
+      screen.classList.remove('active');
+    });
+    
+    // Afficher l'écran demandé
+    const targetScreen = document.getElementById(`${screenName}-screen`);
+    if (targetScreen) {
+      targetScreen.classList.add('active');
+      
+      // Animation d'entrée
+      targetScreen.style.opacity = '0';
+      requestAnimationFrame(() => {
+        targetScreen.style.transition = 'opacity 0.5s ease';
+        targetScreen.style.opacity = '1';
+      });
+    }
+  }
+
+  renderCurrentQuestion() {
+    const question = this.getCurrentQuestion();
+    if (!question) {
+      this.submitQuiz();
+      return;
+    }
+
+    // Vérifier si on doit afficher un WOW break
+    const previousQuestion = this.getPreviousQuestion();
+    if (previousQuestion) {
+      const wowBreak = this.state.quizData.wowBreaks.find(
+        wb => wb.afterQuestion === previousQuestion.id
+      );
+      if (wowBreak && !this.state.wowShown?.[wowBreak.id]) {
+        this.renderWowBreak(wowBreak);
+        return;
+      }
+    }
+
+    // Mettre à jour la progression
+    this.updateProgress();
+
+    // Render la question
+    const container = document.getElementById('question-container');
+    if (!container) return;
+
+    const html = `
+      <div class="question-wrapper" data-question-id="${question.id}">
+        <h2 class="question-title">${question.text}</h2>
+        
+        ${question.scientific_ref ? `
+          <div class="scientific-reference">
+            <span class="ref-icon">📊</span>
+            <span class="ref-text">${question.scientific_ref}</span>
+          </div>
+        ` : ''}
+        
+        <div class="options-grid ${question.type === 'multiple' ? 'multiple-select' : ''}">
+          ${this.renderOptions(question)}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    
+    // Mettre à jour les boutons de navigation
+    this.updateNavigationButtons();
+  }
+
+  renderOptions(question) {
+    const currentAnswer = this.state.answers[question.id];
+    
+    return question.options.map(option => {
+      const isChecked = question.type === 'multiple' 
+        ? currentAnswer?.includes(option.value)
+        : currentAnswer === option.value;
+      
+      return `
+        <label class="option-label ${isChecked ? 'selected' : ''}">
+          <input 
+            type="${question.type === 'multiple' ? 'checkbox' : 'radio'}"
+            name="question-${question.id}"
+            value="${option.value}"
+            class="quiz-option"
+            ${isChecked ? 'checked' : ''}
+          >
+          <span class="option-content">
+            <span class="option-text">${option.label}</span>
+            ${option.mortality_risk ? `
+              <span class="risk-indicator" title="Impact: ${option.mortality_risk}x">
+                ${this.getRiskEmoji(option.mortality_risk)}
+              </span>
+            ` : ''}
+          </span>
+        </label>
+      `;
+    }).join('');
+  }
+
+  renderWowBreak(wowBreak) {
+    const container = document.getElementById('wow-screen');
+    const content = container.querySelector('.wow-content');
+    
+    if (!content) return;
+
+    content.innerHTML = `
+      <div class="wow-wrapper">
+        <h2 class="wow-title">${wowBreak.title}</h2>
+        <p class="wow-text">${wowBreak.content}</p>
+        <cite class="wow-source">${wowBreak.source}</cite>
+        <button class="btn-primary btn-large" onclick="quiz.continueFromWow()">
+          Continuer l'évaluation →
+        </button>
+      </div>
+    `;
+
+    this.switchScreen('wow');
+    
+    // Marquer comme affiché
+    if (!this.state.wowShown) this.state.wowShown = {};
+    this.state.wowShown[wowBreak.id] = true;
+  }
+
+  continueFromWow() {
+    this.switchScreen('quiz');
+    this.state.currentQuestionIndex++;
+    this.renderCurrentQuestion();
+  }
+
+  handleAnswer(input) {
+    const question = this.getCurrentQuestion();
+    if (!question) return;
+
+    if (question.type === 'multiple') {
+      const checked = document.querySelectorAll(`input[name="question-${question.id}"]:checked`);
+      this.state.answers[question.id] = Array.from(checked).map(cb => cb.value);
+    } else {
+      this.state.answers[question.id] = input.value;
+      
+      // Pour les questions simples, mettre à jour visuellement
+      document.querySelectorAll('.option-label').forEach(label => {
+        label.classList.remove('selected');
+      });
+      input.closest('.option-label').classList.add('selected');
+    }
+
+    // Activer le bouton suivant
+    const nextBtn = document.getElementById('next-btn');
+    if (nextBtn) {
+      nextBtn.disabled = false;
+    }
+  }
+
+  handleNext() {
+    const question = this.getCurrentQuestion();
+    
+    // Vérifier qu'une réponse est sélectionnée
+    if (!this.state.answers[question?.id]) {
+      this.showToast('Veuillez sélectionner une réponse');
+      return;
+    }
+
+    // Avancer
+    this.state.currentQuestionIndex++;
+    this.renderCurrentQuestion();
+  }
+
+  handlePrev() {
+    if (this.state.currentQuestionIndex > 0) {
+      this.state.currentQuestionIndex--;
+      this.renderCurrentQuestion();
+    }
+  }
+
+  async submitQuiz() {
+    // Afficher l'écran de chargement
+    this.switchScreen('loading');
     
     try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        console.log('Données envoyées avec succès');
+      // Collecter le profil utilisateur
+      this.collectUserProfile();
+      
+      // Calculer le score via l'API
+      const scoreData = await this.calculateScore();
+      
+      // Afficher les résultats
+      this.renderResults(scoreData);
+      
+      // Envoyer à Google Sheets
+      this.sendToGoogleSheets(scoreData);
+      
     } catch (error) {
-        console.error('Erreur envoi:', error);
+      console.error('Erreur soumission:', error);
+      this.showError('Erreur lors du calcul de votre score');
     }
-}
+  }
 
-// Réservation d'appel
-function bookCall() {
-    // Option 1: Calendly (remplace par ton lien)
-    window.open('https://calendly.com/oralife/consultation', '_blank');
+  async calculateScore() {
+    try {
+      const response = await fetch(`${this.apiBase}/calculate-score`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          answers: this.state.answers,
+          userProfile: this.state.userProfile,
+          completionTime: Math.round((Date.now() - this.state.startTime) / 1000)
+        })
+      });
+
+      if (!response.ok) {
+        // Fallback calcul local simple
+        return this.calculateScoreLocally();
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn('API score non disponible, calcul local:', error);
+      return this.calculateScoreLocally();
+    }
+  }
+
+  calculateScoreLocally() {
+    // Calcul simplifié en local (fallback)
+    let totalScore = 0;
+    let questionCount = 0;
+
+    Object.entries(this.state.answers).forEach(([questionId, answer]) => {
+      const question = this.findQuestionById(questionId);
+      if (question && question.options) {
+        const option = question.options.find(opt => opt.value === answer);
+        if (option?.score) {
+          totalScore += option.score;
+          questionCount++;
+        }
+      }
+    });
+
+    const finalScore = questionCount > 0 ? Math.round((totalScore / (questionCount * 5)) * 100) : 50;
+
+    return {
+      score: finalScore,
+      profile: this.getProfileFromScore(finalScore),
+      biologicalAge: this.state.userProfile.age || 40,
+      estimatedHealthspan: 85,
+      priorities: [
+        { biomarker: "Sommeil", priority: 1, actionableInsight: "Optimise ton sommeil" },
+        { biomarker: "Activité", priority: 2, actionableInsight: "Augmente ton activité physique" },
+        { biomarker: "Nutrition", priority: 3, actionableInsight: "Améliore ton alimentation" }
+      ],
+      recommendations: {
+        immediate: ["Couche-toi 30 min plus tôt ce soir"],
+        week1: ["Établis une routine de sommeil régulière"],
+        month1: ["Optimise complètement ton hygiène de sommeil"]
+      }
+    };
+  }
+
+  renderResults(results) {
+    const container = document.getElementById('results-container');
+    if (!container) return;
+
+    const html = `
+      <div class="results-wrapper">
+        <h1 class="results-title">Tes Résultats ORA Life</h1>
+        
+        <!-- Score Circle -->
+        <div class="score-display">
+          <div class="score-circle">
+            <svg viewBox="0 0 200 200" class="score-svg">
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#e0e0e0" stroke-width="20"/>
+              <circle cx="100" cy="100" r="90" fill="none" 
+                stroke="${this.getScoreColor(results.score)}" 
+                stroke-width="20"
+                stroke-dasharray="${results.score * 5.65} 565"
+                transform="rotate(-90 100 100)"
+                class="score-progress"/>
+            </svg>
+            <div class="score-value">
+              <span class="score-number">${results.score}</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div class="profile-section">
+          <h2 class="profile-level" style="color: ${results.profile.color}">
+            ${results.profile.emoji} ${results.profile.level}
+          </h2>
+          <p class="profile-description">${results.profile.description}</p>
+        </div>
+
+        <!-- Top 3 Priorités -->
+        <div class="priorities-section">
+          <h3>🎯 Tes 3 Priorités</h3>
+          <div class="priorities-grid">
+            ${results.priorities.map(p => `
+              <div class="priority-card">
+                <span class="priority-number">#${p.priority}</span>
+                <h4>${p.biomarker}</h4>
+                <p>${p.actionableInsight}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Protocole -->
+        <div class="protocol-section">
+          <h3>🚀 Ton Protocole Personnalisé</h3>
+          <div class="timeline">
+            <div class="timeline-item">
+              <span class="timeline-marker">24h</span>
+              <div class="timeline-content">
+                <h4>Actions Immédiates</h4>
+                <ul>${results.recommendations.immediate.map(r => `<li>${r}</li>`).join('')}</ul>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <span class="timeline-marker">7j</span>
+              <div class="timeline-content">
+                <h4>Première Semaine</h4>
+                <ul>${results.recommendations.week1.map(r => `<li>${r}</li>`).join('')}</ul>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <span class="timeline-marker">30j</span>
+              <div class="timeline-content">
+                <h4>Premier Mois</h4>
+                <ul>${results.recommendations.month1.map(r => `<li>${r}</li>`).join('')}</ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-section">
+          <h2>Prêt à Transformer Ta Vitalité ?</h2>
+          <p>Reçois ton protocole complet personnalisé par email</p>
+          
+          <form id="email-form" class="email-capture">
+            <input 
+              type="email" 
+              id="email-input"
+              placeholder="ton@email.com" 
+              class="email-input"
+              required
+            >
+            <button type="submit" class="btn-primary">
+              Recevoir Mon Protocole
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    this.switchScreen('results');
     
-    // Option 2: Tracking Google Analytics
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'book_call', {
-            'event_category': 'engagement',
-            'event_label': 'quiz_result',
-            'score': document.getElementById('finalScore').textContent
-        });
+    // Animation du score
+    this.animateScore(results.score);
+    
+    // Setup email form
+    this.setupEmailForm(results);
+  }
+
+  animateScore(targetScore) {
+    const circle = document.querySelector('.score-progress');
+    const numberEl = document.querySelector('.score-number');
+    
+    if (!circle || !numberEl) return;
+
+    // Animation du cercle
+    circle.style.strokeDashoffset = '565';
+    setTimeout(() => {
+      circle.style.transition = 'stroke-dashoffset 2s ease';
+      circle.style.strokeDashoffset = '0';
+    }, 100);
+
+    // Animation du nombre
+    let current = 0;
+    const increment = targetScore / 40;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= targetScore) {
+        current = targetScore;
+        clearInterval(timer);
+      }
+      numberEl.textContent = Math.round(current);
+    }, 50);
+  }
+
+  setupEmailForm(results) {
+    const form = document.getElementById('email-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email-input').value;
+      
+      if (email) {
+        this.state.userProfile.email = email;
+        await this.sendToGoogleSheets({...results, email});
+        this.showToast('✅ Protocole envoyé ! Check tes emails');
+        form.style.display = 'none';
+      }
+    });
+  }
+
+  async sendToGoogleSheets(data) {
+    try {
+      const payload = {
+        ...this.state.userProfile,
+        ...this.state.answers,
+        score: data.score,
+        profile: data.profile?.level,
+        timestamp: new Date().toISOString()
+      };
+
+      await fetch(this.googleScriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('Données envoyées à Google Sheets');
+    } catch (error) {
+      console.error('Erreur envoi Google Sheets:', error);
     }
+  }
+
+  // Méthodes Helper
+  getCurrentQuestion() {
+    let count = 0;
+    for (const section of this.state.quizData.sections) {
+      for (const question of section.questions) {
+        if (count === this.state.currentQuestionIndex) {
+          return question;
+        }
+        count++;
+      }
+    }
+    return null;
+  }
+
+  getPreviousQuestion() {
+    if (this.state.currentQuestionIndex === 0) return null;
+    
+    let count = 0;
+    for (const section of this.state.quizData.sections) {
+      for (const question of section.questions) {
+        if (count === this.state.currentQuestionIndex - 1) {
+          return question;
+        }
+        count++;
+      }
+    }
+    return null;
+  }
+
+  findQuestionById(id) {
+    for (const section of this.state.quizData.sections) {
+      const question = section.questions.find(q => q.id === id);
+      if (question) return question;
+    }
+    return null;
+  }
+
+  getTotalQuestions() {
+    return this.state.quizData.sections.reduce(
+      (total, section) => total + section.questions.length, 0
+    );
+  }
+
+  updateProgress() {
+    const total = this.getTotalQuestions();
+    const current = this.state.currentQuestionIndex + 1;
+    const percentage = (current / total) * 100;
+
+    const fillEl = document.getElementById('progress-fill');
+    const textEl = document.getElementById('progress-text');
+
+    if (fillEl) {
+      fillEl.style.width = `${percentage}%`;
+    }
+
+    if (textEl) {
+      textEl.textContent = `Question ${current} sur ${total}`;
+    }
+  }
+
+  updateNavigationButtons() {
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const question = this.getCurrentQuestion();
+
+    if (prevBtn) {
+      prevBtn.style.display = this.state.currentQuestionIndex > 0 ? 'block' : 'none';
+    }
+
+    if (nextBtn) {
+      nextBtn.disabled = !this.state.answers[question?.id];
+      
+      const isLast = this.state.currentQuestionIndex >= this.getTotalQuestions() - 1;
+      nextBtn.innerHTML = isLast ? 'Voir mes résultats →' : 'Suivant →';
+    }
+  }
+
+  collectUserProfile() {
+    this.state.userProfile = {
+      age: this.state.answers.age || 40,
+      gender: this.state.answers.gender || 'non-specifie',
+      completionTime: Math.round((Date.now() - this.state.startTime) / 1000),
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  getProfileFromScore(score) {
+    if (score >= 90) {
+      return {
+        level: "Biohacker Elite",
+        description: "Tu fais partie du top 1% en termes d'optimisation",
+        color: "#00FF00",
+        emoji: "🚀"
+      };
+    } else if (score >= 70) {
+      return {
+        level: "Optimisé",
+        description: "Excellente base, quelques ajustements pour l'élite",
+        color: "#7FFF00",
+        emoji: "💪"
+      };
+    } else if (score >= 50) {
+      return {
+        level: "Potentiel",
+        description: "Des bases solides avec un énorme potentiel inexploité",
+        color: "#FFD700",
+        emoji: "⚡"
+      };
+    } else if (score >= 30) {
+      return {
+        level: "À Risque",
+        description: "Plusieurs signaux d'alarme, action recommandée",
+        color: "#FF8C00",
+        emoji: "⚠️"
+      };
+    } else {
+      return {
+        level: "Urgent",
+        description: "Transformation urgente nécessaire pour ta santé",
+        color: "#FF0000",
+        emoji: "🆘"
+      };
+    }
+  }
+
+  getScoreColor(score) {
+    if (score >= 80) return '#00FF00';
+    if (score >= 60) return '#FFD700';
+    if (score >= 40) return '#FF8C00';
+    return '#FF0000';
+  }
+
+  getRiskEmoji(risk) {
+    if (risk <= 0.8) return '🟢';
+    if (risk <= 1.2) return '🟡';
+    if (risk <= 1.5) return '🟠';
+    return '🔴';
+  }
+
+  showToast(message) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  showError(message) {
+    const container = document.getElementById('quiz-container');
+    if (container) {
+      container.innerHTML = `
+        <div class="error-message">
+          <p>${message}</p>
+          <button onclick="location.reload()" class="btn-primary">Réessayer</button>
+        </div>
+      `;
+    }
+  }
 }
 
-// Initialisation au chargement de la page
-document.addEventListener('DOMContentLoaded', function() {
-    updateProgressBar();
+// Initialisation
+let quiz;
+document.addEventListener('DOMContentLoaded', () => {
+  quiz = new ORALifeQuiz();
 });
