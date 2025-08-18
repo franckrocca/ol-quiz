@@ -3,177 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORA Life - Évalue l'Impact de Tes Habitudes sur Ta Longévité</title>
-    <meta name="description" content="Diagnostic gratuit basé sur 12+ études scientifiques pour évaluer tes facteurs de vieillissement modifiables">
+    <title>Quiz Biohacking - Découvre Ton Score de Vieillissement | OraLife</title>
+    <meta name="description" content="Test scientifique gratuit en 3 minutes. Découvre ton âge biologique et obtiens un protocole personnalisé pour ralentir ton vieillissement.">
     
-    <!-- Open Graph -->
-    <meta property="og:title" content="ORA Life - Score de Vitalité Scientifique">
-    <meta property="og:description" content="Évalue tes habitudes de vie et leur impact sur ta longévité avec notre diagnostic gratuit">
-    <meta property="og:type" content="website">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
     
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Google Fonts -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="quiz-wrapper">
-        <!-- Header -->
-        <header class="quiz-header">
-            <div class="header-content">
-                <div class="logo-text">ORA LIFE</div>
-                <div class="progress-info">
-                    <span id="header-progress-text">Prêt à commencer</span>
-                </div>
+    <!-- Header avec progression -->
+    <div class="quiz-header">
+        <div class="header-content">
+            <div class="logo-text">ORA LIFE</div>
+            <div class="progress-info">
+                <span id="progress-text">Prêt à commencer</span>
             </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-        </header>
-
-        <!-- Main Container - IMPORTANT: garde cet ID -->
-        <main class="container" id="quiz-container">
-            <!-- Landing Screen -->
-            <div id="landing-screen" class="screen active">
-                <div class="content-wrapper">
-                    <h1 class="main-title">
-                        Découvre les <span class="highlight">7 Signaux</span> que 
-                        Ton Corps Vieillit <span class="danger">Trop Vite</span>
-                    </h1>
-                    
-                    <p class="subtitle">
-                        Évaluation scientifique basée sur les dernières recherches en longévité
-                    </p>
-
-                    <div class="benefits">
-                        <div class="benefit-item">
-                            <span class="icon">🧬</span>
-                            <span>Score de vitalité personnalisé</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="icon">📊</span>
-                            <span>Analyse de tes biomarqueurs lifestyle</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="icon">🎯</span>
-                            <span>3 priorités d'action concrètes</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="icon">🚀</span>
-                            <span>Protocole adapté à ton profil</span>
-                        </div>
-                    </div>
-
-                    <button id="start-quiz-btn" class="btn-primary btn-large" onclick="quiz.startQuiz()">
-                        Commencer l'Évaluation Gratuite
-                        <span class="arrow">→</span>
-                    </button>
-
-                    <div class="trust-indicators">
-                        <p class="participants">
-                            <strong>2,847</strong> personnes ont déjà optimisé leur vitalité
-                        </p>
-                        <p class="time-info">
-                            ⏱️ 3-4 minutes • 100% gratuit • Résultats immédiats
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quiz Screen -->
-            <div id="quiz-screen" class="screen">
-                <div class="card">
-                    <!-- Progress Bar -->
-                    <div class="progress-container">
-                        <div class="progress-bar-quiz">
-                            <div id="progress-fill" class="progress-fill"></div>
-                        </div>
-                        <span id="progress-text" class="progress-text">Question 1 sur 38</span>
-                    </div>
-
-                    <!-- Question Container -->
-                    <div id="question-container" class="question-container">
-                        <!-- Questions seront injectées ici par JavaScript -->
-                    </div>
-
-                    <!-- Navigation -->
-                    <div class="navigation">
-                        <button id="prev-btn" class="btn-secondary" onclick="quiz.previousQuestion()">
-                            ← Retour
-                        </button>
-                        <button id="next-btn" class="btn-primary" onclick="quiz.nextQuestion()">
-                            Suivant →
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- WOW Break Screen -->
-            <div id="wow-screen" class="screen">
-                <div class="wow-content" id="wow-content">
-                    <!-- WOW breaks seront injectés ici -->
-                </div>
-            </div>
-
-            <!-- Loading Screen -->
-            <div id="loading-screen" class="screen">
-                <div class="loader-wrapper">
-                    <div class="loader"></div>
-                    <h2>Analyse de tes réponses en cours...</h2>
-                    <p>Calcul de ton score basé sur 12+ études scientifiques</p>
-                </div>
-            </div>
-
-            <!-- Results Screen -->
-            <div id="results-screen" class="screen">
-                <div id="results-container" class="results-container">
-                    <!-- Résultats seront injectés ici par JavaScript -->
-                </div>
-            </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="quiz-footer">
-            <p>&copy; 2025 ORA Life - Science-Based Longevity</p>
-        </footer>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Container principal -->
+    <div class="container">
+        <!-- Landing Screen -->
+        <div id="screen-landing" class="screen active">
+            <div class="card landing">
+                <div class="logo">ORA LIFE</div>
+                <h1>Découvre Ton Score de Vieillissement</h1>
+                <p class="subtitle">Test scientifique gratuit - 3 minutes</p>
+                <div class="hook">⚠️ 98% des gens vieillissent 2x plus vite sans le savoir</div>
+                <button class="btn-primary" onclick="startQuiz()">
+                    COMMENCER LE TEST GRATUIT
+                </button>
+            </div>
+        </div>
+
+        <!-- Quiz Container (sera rempli dynamiquement) -->
+        <div id="quiz-container"></div>
+
+        <!-- Email Screen -->
+        <div id="screen-email" class="screen">
+            <div class="card">
+                <h2 class="question-text">📊 Dernière étape !</h2>
+                <p class="subtitle" style="text-align: center; margin-bottom: 30px;">
+                    Reçois ton score détaillé par email<br>
+                    <strong>100% gratuit • Résultats immédiats</strong>
+                </p>
+                
+                <form id="emailForm" onsubmit="submitEmail(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="firstname">Prénom *</label>
+                        <input 
+                            type="text" 
+                            id="firstname" 
+                            class="form-input" 
+                            placeholder="Ton prénom"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email *</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            class="form-input" 
+                            placeholder="ton@email.com"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Téléphone *</label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            class="form-input" 
+                            placeholder="06 XX XX XX XX"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="consent" class="checkbox" required>
+                        <label for="consent" class="checkbox-label">
+                            J'accepte de recevoir mon score et des conseils santé personnalisés
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary btn-pulse">
+                        VOIR MON SCORE →
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Screen -->
+        <div id="screen-loading" class="screen">
+            <div class="card loading-card">
+                <div class="loading-animation">
+                    <div class="spinner"></div>
+                </div>
+                <h2>Analyse de tes réponses en cours...</h2>
+                <p class="loading-text">Calcul de ton âge biologique...</p>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="screen-results" class="screen">
+            <div class="card results-card">
+                <h1 class="results-title">Ton Score de Vieillissement</h1>
+                
+                <!-- Score Circle -->
+                <div class="score-container">
+                    <svg class="score-circle" width="250" height="250">
+                        <circle cx="125" cy="125" r="110" stroke="#E0E0E0" stroke-width="20" fill="none"/>
+                        <circle id="scoreProgress" cx="125" cy="125" r="110" stroke="#01FF00" 
+                                stroke-width="20" fill="none" 
+                                stroke-dasharray="691" 
+                                stroke-dashoffset="691"
+                                transform="rotate(-90 125 125)"/>
+                    </svg>
+                    <div class="score-text">
+                        <div class="score-number" id="scoreNumber">0</div>
+                        <div class="score-label">sur 100</div>
+                    </div>
+                </div>
+
+                <!-- Age Comparison -->
+                <div class="age-comparison">
+                    <div class="age-box">
+                        <div class="age-label">Âge chronologique</div>
+                        <div class="age-value" id="chronoAge">--</div>
+                    </div>
+                    <div class="age-arrow">→</div>
+                    <div class="age-box highlight">
+                        <div class="age-label">Âge biologique</div>
+                        <div class="age-value" id="bioAge">--</div>
+                    </div>
+                </div>
+
+                <!-- Risk Analysis -->
+                <div class="risk-analysis">
+                    <h3>Ton Analyse Détaillée</h3>
+                    <div class="risk-level">
+                        <span>Niveau de risque :</span>
+                        <strong id="riskLevel">--</strong>
+                    </div>
+                    <div class="trend">
+                        <span>Tendance actuelle :</span>
+                        <strong id="trend">--</strong>
+                    </div>
+                    <div class="projection">
+                        <h4>Projection sur 10 ans</h4>
+                        <ul id="futureRisks"></ul>
+                    </div>
+                </div>
+
+                <!-- CTA Section -->
+                <div class="cta-section">
+                    <div class="scarcity">
+                        ⏰ Offre limitée : -50% pour les 48 prochaines heures
+                    </div>
+                    
+                    <button class="btn-pulse" onclick="bookCall()">
+                        Réserver mon appel stratégique gratuit (15 min)
+                        <span class="subtitle">avec un expert biohacking</span>
+                    </button>
+                    
+                    <div class="testimonial">
+                        <p class="testimonial-text">
+                            "J'ai gagné 10 ans de vie en 3 mois"
+                        </p>
+                        <p class="testimonial-author">- Marc, 47 ans, CEO</p>
+                    </div>
+                    
+                    <p class="guarantee">
+                        🔒 Garantie 30 jours satisfait ou remboursé
+                    </p>
+                </div>
+                
+                <p class="email-sent">
+                    📧 Ton score détaillé a été envoyé à <span id="userEmail"></span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
     <script src="quiz.js"></script>
-    <script>
-    // Fix pour l'initialisation
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialiser le quiz si pas déjà fait
-        if (typeof ORALifeQuiz !== 'undefined' && !window.quiz) {
-            window.quiz = new ORALifeQuiz();
-            console.log('✅ Quiz initialisé');
-        }
-        
-        // Bouton de démarrage
-        const startBtn = document.getElementById('start-quiz-btn');
-        if (startBtn) {
-            startBtn.onclick = function() {
-                console.log('🚀 Démarrage du quiz');
-                document.getElementById('landing-screen').style.display = 'none';
-                document.getElementById('quiz-screen').style.display = 'block';
-                document.getElementById('quiz-screen').classList.add('active');
-                
-                // Mettre à jour la barre de progression
-                const progressBar = document.getElementById('progressBar');
-                if (progressBar) {
-                    progressBar.style.width = '2.6%'; // 1/38
-                }
-                
-                // Si quiz existe, utiliser ses méthodes
-                if (window.quiz && window.quiz.showScreen) {
-                    window.quiz.showScreen('quiz');
-                }
-            };
-        }
-    });
-    </script>
 </body>
 </html>
