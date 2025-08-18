@@ -3,1208 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OraLife - Découvre Ton Score de Vieillissement</title>
-    <link rel="stylesheet" href="/styles.css">
+    <title>ORA Life - Évalue l'Impact de Tes Habitudes sur Ta Longévité</title>
+    <meta name="description" content="Diagnostic gratuit basé sur 12+ études scientifiques pour évaluer tes facteurs de vieillissement modifiables">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="ORA Life - Score de Vitalité Scientifique">
+    <meta property="og:description" content="Évalue tes habitudes de vie et leur impact sur ta longévité avec notre diagnostic gratuit">
+    <meta property="og:type" content="website">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header avec logo et progression -->
-    <div class="quiz-header">
-        <div class="header-content">
-            <div class="logo-text">ORA LIFE</div>
-            <div class="progress-info">
-                <span id="progress-text">Prêt à commencer</span>
-            </div>
-        </div>
-        <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
-    </div>
+    <div class="quiz-wrapper">
+        <!-- Header -->
+        <header class="quiz-header">
+            <div class="logo">ORA LIFE</div>
+        </header>
 
-    <div class="container">
-        <!-- LANDING -->
-        <div id="screen-0" class="screen active">
-            <div class="card landing">
-                <div class="logo">ORA LIFE</div>
-                <h1>Découvre Ton Score de Vieillissement</h1>
-                <p class="subtitle">Test scientifique gratuit - 3 minutes</p>
-                <div class="hook">⚠️ 98% des gens vieillissent 2x plus vite sans le savoir</div>
-                <button class="btn-primary" onclick="goToNextScreen()">
-                    COMMENCER LE TEST GRATUIT
-                </button>
-            </div>
-        </div>
-
-        <!-- Q1: GENRE avec photos -->
-        <div id="screen-1" class="screen">
-            <div class="card">
-                <h2 class="question-text">Tu es ?</h2>
-                <div class="visual-options">
-                    <div class="visual-option" onclick="answer('gender', 'homme'); goToNextScreen();">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" alt="Homme">
-                        <div class="label">Homme</div>
-                    </div>
-                    <div class="visual-option" onclick="answer('gender', 'femme'); goToNextScreen();">
-                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop" alt="Femme">
-                        <div class="label">Femme</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Q2: AGE EXACT -->
-        <div id="screen-2" class="screen">
-            <div class="card">
-                <h2 class="question-text">Quel est ton âge exact ?</h2>
-                <div class="form-group">
-                    <input 
-                        type="number" 
-                        id="age-exact" 
-                        class="form-input" 
-                        placeholder="Ex: 42"
-                        min="18"
-                        max="100"
-                        style="font-size: 24px; text-align: center;"
-                    >
-                </div>
-                <button class="btn-primary" onclick="if(validateAge()) goToNextScreen();" style="width: 100%; margin-top: 20px;">
-                    CONTINUER →
-                </button>
-            </div>
-        </div>
-
-        <!-- Q3: POIDS ET TAILLE avec calcul IMC -->
-        <div id="screen-3" class="screen">
-            <div class="card">
-                <h2 class="question-text">Tes mensurations actuelles</h2>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label class="form-label">Poids (kg)</label>
-                        <input type="number" id="weight" class="form-input" 
-                               placeholder="75" min="30" max="200" onchange="calculateBMI()">
-                    </div>
+        <!-- Main Container -->
+        <main class="quiz-container" id="quiz-container">
+            <!-- Landing Screen (comme tu l'as actuellement) -->
+            <div id="landing-screen" class="screen active">
+                <div class="content-wrapper">
+                    <h1 class="main-title">
+                        Découvre les <span class="highlight">7 Signaux</span> que 
+                        Ton Corps Vieillit <span class="danger">Trop Vite</span>
+                    </h1>
                     
-                    <div class="form-group">
-                        <label class="form-label">Taille (cm)</label>
-                        <input type="number" id="height" class="form-input" 
-                               placeholder="175" min="120" max="230" onchange="calculateBMI()">
-                    </div>
-                </div>
-                
-                <div id="bmi-display" class="bmi-card" style="display: none;">
-                    <h3>Ton IMC : <span id="bmi-value">--</span></h3>
-                    <div id="bmi-interpretation"></div>
-                    <div class="bmi-gauge">
-                        <div class="bmi-marker" id="bmi-marker"></div>
-                    </div>
-                </div>
-                
-                <button class="btn-primary" onclick="if(validateWeightHeight()) goToNextScreen();" style="width: 100%; margin-top: 20px;">
-                    CONTINUER →
-                </button>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q4: OBJECTIFS (MULTI) -->
-        <div id="screen-4" class="screen">
-            <div class="card">
-                <h2 class="question-text">Tes objectifs prioritaires ?</h2>
-                <p class="multi-select-info">Choisis jusqu'à 3 options</p>
-                <div class="options" id="objectives-options">
-                    <div class="option" onclick="toggleMultiSelect('objectives', 'Énergie illimitée', this, 3)">⚡ Énergie illimitée</div>
-                    <div class="option" onclick="toggleMultiSelect('objectives', 'Corps optimal', this, 3)">💪 Corps optimal</div>
-                    <div class="option" onclick="toggleMultiSelect('objectives', 'Mental sharp', this, 3)">🧠 Mental sharp</div>
-                    <div class="option" onclick="toggleMultiSelect('objectives', 'Longévité maximale', this, 3)">⏰ Longévité maximale</div>
-                    <div class="option" onclick="toggleMultiSelect('objectives', 'Sommeil réparateur', this, 3)">😴 Sommeil réparateur</div>
-                    <div class="option" onclick="toggleMultiSelect('objectives', 'Zéro stress', this, 3)">🧘 Zéro stress</div>
-                </div>
-                <button class="btn-primary" onclick="if(validateMultiSelect('objectives')) goToNextScreen();" style="width: 100%; margin-top: 20px;">
-                    CONTINUER →
-                </button>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q5: ÉNERGIE vs 3 ANS -->
-        <div id="screen-5" class="screen">
-            <div class="card">
-                <h2 class="question-text">Comparé à il y a 3 ans, ton énergie c'est :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('energy_vs_3years', 'Mieux qu\'avant'); goToNextScreen();">Mieux qu'avant</div>
-                    <div class="option" onclick="answer('energy_vs_3years', 'Identique'); goToNextScreen();">Identique</div>
-                    <div class="option" onclick="answer('energy_vs_3years', '-20% environ'); goToNextScreen();">-20% environ</div>
-                    <div class="option" onclick="answer('energy_vs_3years', '-40% environ'); goToNextScreen();">-40% environ</div>
-                    <div class="option" onclick="answer('energy_vs_3years', '-60% ou plus'); goToNextScreen();">-60% ou plus</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q6: DERNIÈRE FOIS À 100% -->
-        <div id="screen-6" class="screen">
-            <div class="card">
-                <h2 class="question-text">La dernière fois que tu t'es senti(e) à 100% :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('last_100_percent', 'Cette semaine'); goToNextScreen();">Cette semaine</div>
-                    <div class="option" onclick="answer('last_100_percent', 'Ce mois-ci'); goToNextScreen();">Ce mois-ci</div>
-                    <div class="option" onclick="answer('last_100_percent', 'Cette année'); goToNextScreen();">Cette année</div>
-                    <div class="option" onclick="answer('last_100_percent', 'L\'année dernière'); goToNextScreen();">L'année dernière</div>
-                    <div class="option" onclick="answer('last_100_percent', 'Je ne sais plus'); goToNextScreen();">Je ne sais plus</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q7: BLOCAGE -->
-        <div id="screen-7" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ce qui t'a empêché de changer jusqu'ici :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('change_blocker', 'Trop d\'infos contradictoires'); goToNextScreen();">Trop d'infos contradictoires</div>
-                    <div class="option" onclick="answer('change_blocker', 'Manque de temps'); goToNextScreen();">Manque de temps</div>
-                    <div class="option" onclick="answer('change_blocker', 'J\'ai essayé sans résultats'); goToNextScreen();">J'ai essayé sans résultats</div>
-                    <div class="option" onclick="answer('change_blocker', 'Trop cher'); goToNextScreen();">Trop cher</div>
-                    <div class="option" onclick="answer('change_blocker', 'Je ne savais pas comment'); goToNextScreen();">Je ne savais pas comment</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q8: ESCALIER -->
-        <div id="screen-8" class="screen">
-            <div class="card">
-                <h2 class="question-text">Test de l'escalier (2 étages sans pause) :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('stairs_test', 'Facile, en parlant'); goToNextScreen();">Facile, en parlant</div>
-                    <div class="option" onclick="answer('stairs_test', 'Léger essoufflement'); goToNextScreen();">Léger essoufflement</div>
-                    <div class="option" onclick="answer('stairs_test', 'Besoin de reprendre mon souffle'); goToNextScreen();">Besoin de reprendre mon souffle</div>
-                    <div class="option" onclick="answer('stairs_test', 'Très difficile'); goToNextScreen();">Très difficile</div>
-                    <div class="option" onclick="answer('stairs_test', 'J\'évite les escaliers'); goToNextScreen();">J'évite les escaliers</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q9: HEURES ASSIS -->
-        <div id="screen-9" class="screen">
-            <div class="card">
-                <h2 class="question-text">Heures assis par jour :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('sitting_hours', 'Moins de 4h'); goToNextScreen();">Moins de 4h</div>
-                    <div class="option" onclick="answer('sitting_hours', '4-6h'); goToNextScreen();">4-6h</div>
-                    <div class="option" onclick="answer('sitting_hours', '6-8h'); goToNextScreen();">6-8h</div>
-                    <div class="option" onclick="answer('sitting_hours', '8-10h'); goToNextScreen();">8-10h</div>
-                    <div class="option" onclick="answer('sitting_hours', 'Plus de 10h'); goToNextScreen();">Plus de 10h</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- WOW BREAK 1 -->
-        <div id="screen-wow1" class="screen">
-            <div class="card wow-break">
-                <div class="wow-header">
-                    <div class="wow-icon">🪑</div>
-                    <h2 class="wow-title">TA CHAISE TE TUE</h2>
-                </div>
-                
-                <div class="wow-content">
-                    <span class="study-badge">📊 MÉTA-ANALYSE • 595,086 PARTICIPANTS</span>
-                    
-                    <div class="wow-stat">10h assis = +52% mortalité</div>
-                    
-                    <p style="text-align: center; font-weight: 600; color: #FF4444; margin: 20px 0;">
-                        MÊME avec du sport régulier !
+                    <p class="subtitle">
+                        Évaluation scientifique basée sur les dernières recherches en longévité
                     </p>
-                    
-                    <div style="background: #FFF9F0; border-left: 3px solid #FFA500; padding: 15px; margin: 20px 0;">
-                        <strong>Échelle de risque :</strong>
-                        <div style="margin-top: 10px;">
-                            • 4h assis : ✅ Normal<br>
-                            • 7h : ⚠️ +5% mortalité<br>
-                            • 10h : 🚨 +34% (AVEC sport)<br>
-                            • 10h : 💀 +52% (SANS sport)
+
+                    <div class="benefits">
+                        <div class="benefit-item">
+                            <span class="icon">🧬</span>
+                            <span>Score de vitalité personnalisé</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="icon">📊</span>
+                            <span>Analyse de tes biomarqueurs lifestyle</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="icon">🎯</span>
+                            <span>3 priorités d'action concrètes</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="icon">🚀</span>
+                            <span>Protocole adapté à ton profil</span>
                         </div>
                     </div>
-                    
-                    <p style="background: #E8F5E9; padding: 12px; border-radius: 8px; font-weight: 600; color: #2E7D32;">
-                        💡 Solution : Pause active toutes les heures
-                    </p>
-                    
-                    <div class="wow-source">
-                        Source : PLoS ONE (2013) • PMID: 23826128
-                    </div>
-                </div>
-                
-                <button class="btn-primary btn-green" onclick="goToNextScreen()">
-                    CONTINUER L'ANALYSE →
-                </button>
-            </div>
-        </div>
 
-        <!-- Continuer avec toutes les questions jusqu'à Q41 + tous les WOW breaks... -->
-        <!-- Je continue dans la partie 2 du fichier -->
-
-        <!-- Q10: SOMMEIL -->
-        <div id="screen-10" class="screen">
-            <div class="card">
-                <h2 class="question-text">Réveils nocturnes par nuit :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('night_wakeups', '0 (sommeil parfait)'); goToNextScreen();">0 (sommeil parfait)</div>
-                    <div class="option" onclick="answer('night_wakeups', '1 fois'); goToNextScreen();">1 fois</div>
-                    <div class="option" onclick="answer('night_wakeups', '2-3 fois'); goToNextScreen();">2-3 fois</div>
-                    <div class="option" onclick="answer('night_wakeups', '4+ fois'); goToNextScreen();">4+ fois</div>
-                    <div class="option" onclick="answer('night_wakeups', 'Insomnie chronique'); goToNextScreen();">Insomnie chronique</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q11: CYCLE/LIBIDO (Conditionnel) -->
-        <div id="screen-11" class="screen">
-            <div class="card">
-                <h2 class="question-text" id="q11-text">Question spécifique</h2>
-                <div class="options" id="q11-options"></div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q12: CRASH -->
-        <div id="screen-12" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ton premier crash énergétique arrive :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('first_crash', 'Jamais'); goToNextScreen();">Jamais</div>
-                    <div class="option" onclick="answer('first_crash', 'Après 17h'); goToNextScreen();">Après 17h</div>
-                    <div class="option" onclick="answer('first_crash', 'Vers 14h-15h'); goToNextScreen();">Vers 14h-15h</div>
-                    <div class="option" onclick="answer('first_crash', 'Juste après le déjeuner'); goToNextScreen();">Juste après le déjeuner</div>
-                    <div class="option" onclick="answer('first_crash', 'Dès le matin'); goToNextScreen();">Dès le matin</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q13: POIDS -->
-        <div id="screen-13" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ton poids vs ton idéal :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('weight_vs_ideal', 'Parfait'); goToNextScreen();">Parfait</div>
-                    <div class="option" onclick="answer('weight_vs_ideal', '+2-5 kg'); goToNextScreen();">+2-5 kg</div>
-                    <div class="option" onclick="answer('weight_vs_ideal', '+5-10 kg'); goToNextScreen();">+5-10 kg</div>
-                    <div class="option" onclick="answer('weight_vs_ideal', '+10-15 kg'); goToNextScreen();">+10-15 kg</div>
-                    <div class="option" onclick="answer('weight_vs_ideal', '+15 kg ou plus'); goToNextScreen();">+15 kg ou plus</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q14: DIGESTION -->
-        <div id="screen-14" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ta digestion au quotidien :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('digestion', 'Parfaite comme une horloge'); goToNextScreen();">Parfaite comme une horloge</div>
-                    <div class="option" onclick="answer('digestion', 'Quelques inconforts occasionnels'); goToNextScreen();">Quelques inconforts occasionnels</div>
-                    <div class="option" onclick="answer('digestion', 'Ballonnements fréquents'); goToNextScreen();">Ballonnements fréquents</div>
-                    <div class="option" onclick="answer('digestion', 'Problèmes quotidiens'); goToNextScreen();">Problèmes quotidiens</div>
-                    <div class="option" onclick="answer('digestion', 'Chaos intestinal permanent'); goToNextScreen();">Chaos intestinal permanent</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- WOW BREAK 2 -->
-        <div id="screen-wow2" class="screen">
-            <div class="card wow-break">
-                <div class="wow-header">
-                    <div class="wow-icon">🧠</div>
-                    <h2 class="wow-title">TON VENTRE CONTRÔLE TON CERVEAU</h2>
-                </div>
-                
-                <div class="wow-content">
-                    <span class="study-badge">📊 NATURE MICROBIOLOGY • 1,054 PARTICIPANTS</span>
-                    
-                    <div class="wow-stat">95% sérotonine = intestin</div>
-                    
-                    <p style="text-align: center; font-weight: 600; color: var(--primary-blue); margin: 20px 0;">
-                        Ton bonheur vient littéralement du ventre !
-                    </p>
-                    
-                    <div style="background: #FFF5F5; border-left: 3px solid #FF4444; padding: 15px; margin: 20px 0;">
-                        <strong>Intestin déréglé =</strong>
-                        <div style="margin-top: 10px;">
-                            😔 +43% risque dépression<br>
-                            😰 +38% anxiété chronique<br>
-                            🔥 +52% inflammation<br>
-                            🧠 -27% performances cognitives
-                        </div>
-                    </div>
-                    
-                    <p style="background: #E8F5E9; padding: 12px; border-radius: 8px; font-weight: 600; color: #2E7D32;">
-                        ✅ 3 semaines de probiotiques = humeur transformée
-                    </p>
-                    
-                    <div class="wow-source">
-                        Source : Nature Microbiology (2023) • DOI: 10.1038/s41564-023-01339-5
-                    </div>
-                </div>
-                
-                <button class="btn-primary btn-green" onclick="goToNextScreen()">
-                    CONTINUER L'ANALYSE →
-                </button>
-            </div>
-        </div>
-
-        <!-- Q15 à Q41 + tous les autres WOW breaks... -->
-
-        <!-- Q15: DOULEURS ARTICULAIRES -->
-        <div id="screen-15" class="screen">
-            <div class="card">
-                <h2 class="question-text">Douleurs articulaires :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('joint_pain', 'Jamais'); goToNextScreen();">Jamais</div>
-                    <div class="option" onclick="answer('joint_pain', 'Après effort intense uniquement'); goToNextScreen();">Après effort intense uniquement</div>
-                    <div class="option" onclick="answer('joint_pain', 'Le matin au réveil'); goToNextScreen();">Le matin au réveil</div>
-                    <div class="option" onclick="answer('joint_pain', 'Régulièrement dans la journée'); goToNextScreen();">Régulièrement dans la journée</div>
-                    <div class="option" onclick="answer('joint_pain', 'Douleurs chroniques permanentes'); goToNextScreen();">Douleurs chroniques permanentes</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q16: MÉMOIRE -->
-        <div id="screen-16" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ta mémoire et concentration :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('memory_focus', 'Excellentes'); goToNextScreen();">Excellentes</div>
-                    <div class="option" onclick="answer('memory_focus', 'Quelques oublis mineurs'); goToNextScreen();">Quelques oublis mineurs</div>
-                    <div class="option" onclick="answer('memory_focus', 'Difficultés fréquentes'); goToNextScreen();">Difficultés fréquentes</div>
-                    <div class="option" onclick="answer('memory_focus', 'Brouillard mental régulier'); goToNextScreen();">Brouillard mental régulier</div>
-                    <div class="option" onclick="answer('memory_focus', 'Très inquiétant'); goToNextScreen();">Très inquiétant</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q17: SYMPTÔMES/MUSCLE (Conditionnel) -->
-        <div id="screen-17" class="screen">
-            <div class="card">
-                <h2 class="question-text" id="q17-text">Question spécifique</h2>
-                <div class="options" id="q17-options"></div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q18: RÉCUPÉRATION -->
-        <div id="screen-18" class="screen">
-            <div class="card">
-                <h2 class="question-text">Récupération après effort physique :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('recovery', 'Moins de 24h'); goToNextScreen();">Moins de 24h</div>
-                    <div class="option" onclick="answer('recovery', '24-48h'); goToNextScreen();">24-48h</div>
-                    <div class="option" onclick="answer('recovery', '2-3 jours'); goToNextScreen();">2-3 jours</div>
-                    <div class="option" onclick="answer('recovery', '4-7 jours'); goToNextScreen();">4-7 jours</div>
-                    <div class="option" onclick="answer('recovery', 'Plus d\'une semaine'); goToNextScreen();">Plus d'une semaine</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q19: STRESS -->
-        <div id="screen-19" class="screen">
-            <div class="card">
-                <h2 class="question-text">Niveau de stress chronique :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('stress_level', 'Zen permanent'); goToNextScreen();">Zen permanent</div>
-                    <div class="option" onclick="answer('stress_level', 'Gérable la plupart du temps'); goToNextScreen();">Gérable la plupart du temps</div>
-                    <div class="option" onclick="answer('stress_level', 'Élevé régulièrement'); goToNextScreen();">Élevé régulièrement</div>
-                    <div class="option" onclick="answer('stress_level', 'Très élevé quotidiennement'); goToNextScreen();">Très élevé quotidiennement</div>
-                    <div class="option" onclick="answer('stress_level', 'Mode survie/burnout'); goToNextScreen();">Mode survie/burnout</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q20: PEAU -->
-        <div id="screen-20" class="screen">
-            <div class="card">
-                <h2 class="question-text">Qualité de ta peau :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('skin_quality', 'Éclatante et ferme'); goToNextScreen();">Éclatante et ferme</div>
-                    <div class="option" onclick="answer('skin_quality', 'Correcte pour mon âge'); goToNextScreen();">Correcte pour mon âge</div>
-                    <div class="option" onclick="answer('skin_quality', 'Terne et fatiguée'); goToNextScreen();">Terne et fatiguée</div>
-                    <div class="option" onclick="answer('skin_quality', 'Rides marquées'); goToNextScreen();">Rides marquées</div>
-                    <div class="option" onclick="answer('skin_quality', 'Très vieillie prématurément'); goToNextScreen();">Très vieillie prématurément</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q21: ENVIRONNEMENT -->
-        <div id="screen-21" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ton environnement principal :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('living_environment', 'Nature/campagne (air pur)'); goToNextScreen();">Nature/campagne (air pur)</div>
-                    <div class="option" onclick="answer('living_environment', 'Petite ville (<50k habitants)'); goToNextScreen();">Petite ville (<50k habitants)</div>
-                    <div class="option" onclick="answer('living_environment', 'Ville moyenne (50-200k)'); goToNextScreen();">Ville moyenne (50-200k)</div>
-                    <div class="option" onclick="answer('living_environment', 'Grande ville (200k-1M)'); goToNextScreen();">Grande ville (200k-1M)</div>
-                    <div class="option" onclick="answer('living_environment', 'Mégapole (Paris, Lyon, Marseille)'); goToNextScreen();">Mégapole (Paris, Lyon, Marseille)</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- WOW BREAK 3 -->
-        <div id="screen-wow3" class="screen">
-            <div class="card wow-break">
-                <div class="wow-header">
-                    <div class="wow-icon">🏙️</div>
-                    <h2 class="wow-title">L'AIR QUI TUE</h2>
-                </div>
-                
-                <div class="wow-content">
-                    <span class="study-badge">📊 THE LANCET • 7 MILLIONS MORTS/AN</span>
-                    
-                    <div class="wow-stat">Ville = -2.2 ans de vie</div>
-                    
-                    <p style="text-align: center; font-weight: 600; color: #FF4444; margin: 20px 0;">
-                        Particules fines PM2.5 = poison invisible
-                    </p>
-                    
-                    <div style="background: #FFF5F5; border-left: 3px solid #FF4444; padding: 15px; margin: 20px 0;">
-                        <strong>PM2.5 > 10 μg/m³ =</strong>
-                        <div style="margin-top: 10px;">
-                            ❤️ +15% maladies cardiaques<br>
-                            🧠 +25% déclin cognitif<br>
-                            🔥 +30% inflammation<br>
-                            🫁 -20% capacité pulmonaire
-                        </div>
-                    </div>
-                    
-                    <div style="background: #F0F8FF; border: 1px solid #4A90E2; padding: 12px; border-radius: 8px; margin: 15px 0;">
-                        <strong>📍 Niveaux PM2.5 France :</strong><br>
-                        • Paris : 15-20 μg/m³<br>
-                        • Lyon : 18-22 μg/m³<br>
-                        • Campagne : 5-8 μg/m³
-                    </div>
-                    
-                    <div class="wow-source">
-                        Source : The Lancet (2022) • DOI: 10.1016/S2542-5196(22)00090-0
-                    </div>
-                </div>
-                
-                <button class="btn-primary btn-green" onclick="goToNextScreen()">
-                    CONTINUER L'ANALYSE →
-                </button>
-            </div>
-        </div>
-
-        <!-- Q22: SOLEIL -->
-        <div id="screen-22" class="screen">
-            <div class="card">
-                <h2 class="question-text">Exposition soleil (peau nue) :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('sun_exposure', '30min+ quotidien'); goToNextScreen();">30min+ quotidien</div>
-                    <div class="option" onclick="answer('sun_exposure', '15-30min régulier'); goToNextScreen();">15-30min régulier</div>
-                    <div class="option" onclick="answer('sun_exposure', 'Quelques fois/semaine'); goToNextScreen();">Quelques fois/semaine</div>
-                    <div class="option" onclick="answer('sun_exposure', 'Rarement'); goToNextScreen();">Rarement</div>
-                    <div class="option" onclick="answer('sun_exposure', 'Jamais (vampire mode)'); goToNextScreen();">Jamais (vampire mode)</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q23: NATURE -->
-        <div id="screen-23" class="screen">
-            <div class="card">
-                <h2 class="question-text">Temps en nature par semaine :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('nature_time', 'Plus de 10h'); goToNextScreen();">Plus de 10h</div>
-                    <div class="option" onclick="answer('nature_time', '5-10h'); goToNextScreen();">5-10h</div>
-                    <div class="option" onclick="answer('nature_time', '2-5h'); goToNextScreen();">2-5h</div>
-                    <div class="option" onclick="answer('nature_time', 'Moins de 2h'); goToNextScreen();">Moins de 2h</div>
-                    <div class="option" onclick="answer('nature_time', 'Zéro'); goToNextScreen();">Zéro</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q24: QUALITÉ SOMMEIL -->
-        <div id="screen-24" class="screen">
-            <div class="card">
-                <h2 class="question-text">Qualité de ton sommeil :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('sleep_quality', '7-9h de sommeil profond'); goToNextScreen();">7-9h de sommeil profond</div>
-                    <div class="option" onclick="answer('sleep_quality', '6-7h correct'); goToNextScreen();">6-7h correct</div>
-                    <div class="option" onclick="answer('sleep_quality', '5-6h léger et fragmenté'); goToNextScreen();">5-6h léger et fragmenté</div>
-                    <div class="option" onclick="answer('sleep_quality', 'Moins de 5h'); goToNextScreen();">Moins de 5h</div>
-                    <div class="option" onclick="answer('sleep_quality', 'Insomnie chronique'); goToNextScreen();">Insomnie chronique</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q25: HEURE COUCHER -->
-        <div id="screen-25" class="screen">
-            <div class="card">
-                <h2 class="question-text">Heure habituelle du coucher :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('bedtime', 'Avant 22h'); goToNextScreen();">Avant 22h</div>
-                    <div class="option" onclick="answer('bedtime', '22h-23h'); goToNextScreen();">22h-23h</div>
-                    <div class="option" onclick="answer('bedtime', '23h-minuit'); goToNextScreen();">23h-minuit</div>
-                    <div class="option" onclick="answer('bedtime', 'Minuit-1h'); goToNextScreen();">Minuit-1h</div>
-                    <div class="option" onclick="answer('bedtime', 'Après 1h du matin'); goToNextScreen();">Après 1h du matin</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q26: ÉCRANS -->
-        <div id="screen-26" class="screen">
-            <div class="card">
-                <h2 class="question-text">Écrans avant de dormir :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('screens_before_bed', 'Jamais (coupure 2h avant)'); goToNextScreen();">Jamais (coupure 2h avant)</div>
-                    <div class="option" onclick="answer('screens_before_bed', 'Avec lunettes anti-lumière bleue'); goToNextScreen();">Avec lunettes anti-lumière bleue</div>
-                    <div class="option" onclick="answer('screens_before_bed', 'Parfois'); goToNextScreen();">Parfois</div>
-                    <div class="option" onclick="answer('screens_before_bed', 'Toujours'); goToNextScreen();">Toujours</div>
-                    <div class="option" onclick="answer('screens_before_bed', 'Jusqu\'au lit'); goToNextScreen();">Jusqu'au lit</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q27: PETIT-DÉJ -->
-        <div id="screen-27" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ton petit-déjeuner type :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('breakfast', 'Jeûne intermittent'); goToNextScreen();">Jeûne intermittent</div>
-                    <div class="option" onclick="answer('breakfast', 'Protéines + bons gras'); goToNextScreen();">Protéines + bons gras</div>
-                    <div class="option" onclick="answer('breakfast', 'Céréales complètes + fruits'); goToNextScreen();">Céréales complètes + fruits</div>
-                    <div class="option" onclick="answer('breakfast', 'Sucré (pain blanc, confiture)'); goToNextScreen();">Sucré (pain blanc, confiture)</div>
-                    <div class="option" onclick="answer('breakfast', 'Juste café/rien'); goToNextScreen();">Juste café/rien</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q28: HYDRATATION -->
-        <div id="screen-28" class="screen">
-            <div class="card">
-                <h2 class="question-text">Hydratation quotidienne (eau pure) :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('hydration', '2L+ religieusement'); goToNextScreen();">2L+ religieusement</div>
-                    <div class="option" onclick="answer('hydration', '1.5-2L'); goToNextScreen();">1.5-2L</div>
-                    <div class="option" onclick="answer('hydration', '1-1.5L'); goToNextScreen();">1-1.5L</div>
-                    <div class="option" onclick="answer('hydration', 'Moins d\'1L'); goToNextScreen();">Moins d'1L</div>
-                    <div class="option" onclick="answer('hydration', 'Principalement café/sodas'); goToNextScreen();">Principalement café/sodas</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q29: ALCOOL -->
-        <div id="screen-29" class="screen">
-            <div class="card">
-                <h2 class="question-text">Consommation d'alcool par semaine :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('alcohol', '0 (jamais)'); goToNextScreen();">0 (jamais)</div>
-                    <div class="option" onclick="answer('alcohol', '1-3 verres'); goToNextScreen();">1-3 verres</div>
-                    <div class="option" onclick="answer('alcohol', '4-7 verres (1/jour)'); goToNextScreen();">4-7 verres (1/jour)</div>
-                    <div class="option" onclick="answer('alcohol', '8-14 verres (2/jour)'); goToNextScreen();">8-14 verres (2/jour)</div>
-                    <div class="option" onclick="answer('alcohol', '15+ verres'); goToNextScreen();">15+ verres</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- WOW BREAK 4 - NAD+ -->
-        <div id="screen-wow4" class="screen">
-            <div class="card wow-break">
-                <div class="wow-header">
-                    <div class="wow-icon">💊</div>
-                    <h2 class="wow-title">LE SUPER-POUVOIR CACHÉ</h2>
-                </div>
-                
-                <div class="wow-content">
-                    <span class="study-badge">📊 CELL • HARVARD MEDICAL SCHOOL</span>
-                    
-                    <div class="wow-stat">NAD+ : -50% à 50 ans</div>
-                    
-                    <p style="text-align: center; font-weight: 600; color: var(--primary-blue); margin: 20px 0;">
-                        La molécule qui contrôle TOUT ton vieillissement
-                    </p>
-                    
-                    <div style="background: #FFF5F5; border-left: 3px solid #FF4444; padding: 15px; margin: 20px 0;">
-                        <strong>Le NAD+ contrôle :</strong>
-                        <div style="margin-top: 10px;">
-                            ⚡ Production d'énergie cellulaire<br>
-                            🧬 Réparation de l'ADN<br>
-                            🔄 Régénération cellulaire<br>
-                            🧠 Fonction cognitive
-                        </div>
-                    </div>
-                    
-                    <div style="background: #E8F5E9; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                        <strong>Comment booster ton NAD+ :</strong><br>
-                        • Jeûne intermittent : +30%<br>
-                        • HIIT : +25%<br>
-                        • Sauna : +20%<br>
-                        • NMN/NR : +40-60%
-                    </div>
-                    
-                    <p style="text-align: center; font-weight: 700; color: var(--accent-green);">
-                        David Sinclair : "NAD+ = bouton reset du vieillissement"
-                    </p>
-                    
-                    <div class="wow-source">
-                        Source : Cell (2024) • DOI: 10.1016/j.cell.2024.01.002
-                    </div>
-                </div>
-                
-                <button class="btn-primary btn-green" onclick="goToNextScreen()">
-                    CONTINUER L'ANALYSE →
-                </button>
-            </div>
-        </div>
-
-        <!-- Q30: ACTIVITÉ PHYSIQUE (MULTI) -->
-        <div id="screen-30" class="screen">
-            <div class="card">
-                <h2 class="question-text">Tes activités physiques régulières ?</h2>
-                <p class="multi-select-info">Choisis toutes celles que tu pratiques</p>
-                <div class="options options-grid" id="activities-options">
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Course à pied', this)">🏃 Course à pied</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Musculation', this)">💪 Musculation</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'HIIT/CrossFit', this)">🔥 HIIT/CrossFit</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Yoga/Pilates', this)">🧘 Yoga/Pilates</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Natation', this)">🏊 Natation</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Vélo', this)">🚴 Vélo</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Marche active', this)">🚶 Marche active</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Sports collectifs', this)">⚽ Sports collectifs</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Arts martiaux', this)">🥋 Arts martiaux</div>
-                    <div class="option" onclick="toggleMultiSelect('activities', 'Aucune activité', this)">❌ Aucune activité</div>
-                </div>
-                <button class="btn-primary" onclick="if(validateMultiSelect('activities')) goToNextScreen();" style="width: 100%; margin-top: 20px;">
-                    CONTINUER →
-                </button>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q31: FRÉQUENCE SPORT -->
-        <div id="screen-31" class="screen">
-            <div class="card">
-                <h2 class="question-text">Fréquence d'activité physique :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('sport_frequency', 'Tous les jours'); goToNextScreen();">Tous les jours</div>
-                    <div class="option" onclick="answer('sport_frequency', '4-6 fois/semaine'); goToNextScreen();">4-6 fois/semaine</div>
-                    <div class="option" onclick="answer('sport_frequency', '2-3 fois/semaine'); goToNextScreen();">2-3 fois/semaine</div>
-                    <div class="option" onclick="answer('sport_frequency', '1 fois/semaine'); goToNextScreen();">1 fois/semaine</div>
-                    <div class="option" onclick="answer('sport_frequency', 'Rarement ou jamais'); goToNextScreen();">Rarement ou jamais</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q32: COMPLÉMENTS -->
-        <div id="screen-32" class="screen">
-            <div class="card">
-                <h2 class="question-text">Compléments alimentaires :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('supplements', 'Protocole complet personnalisé'); goToNextScreen();">Protocole complet personnalisé</div>
-                    <div class="option" onclick="answer('supplements', 'Basiques (Vit D, Omega 3, Magnésium)'); goToNextScreen();">Basiques (Vit D, Omega 3, Magnésium)</div>
-                    <div class="option" onclick="answer('supplements', 'Occasionnels'); goToNextScreen();">Occasionnels</div>
-                    <div class="option" onclick="answer('supplements', 'Jamais'); goToNextScreen();">Jamais</div>
-                    <div class="option" onclick="answer('supplements', 'Je ne sais pas quoi prendre'); goToNextScreen();">Je ne sais pas quoi prendre</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q33: TRACKING (MULTI) -->
-        <div id="screen-33" class="screen">
-            <div class="card">
-                <h2 class="question-text">Outils de tracking santé ?</h2>
-                <p class="multi-select-info">Choisis tous ceux que tu utilises</p>
-                <div class="options options-grid" id="tracking-options">
-                    <div class="option" onclick="toggleMultiSelect('tracking', 'Apple Watch', this)">⌚ Apple Watch</div>
-                    <div class="option" onclick="toggleMultiSelect('tracking', 'Garmin', this)">⌚ Garmin</div>
-                    <div class="option" onclick="toggleMultiSelect('tracking', 'Whoop', this)">📊 Whoop</div>
-                    <div class="option" onclick="toggleMultiSelect('tracking', 'Oura Ring', this)">💍 Oura Ring</div>
-                    <div class="option" onclick="toggleMultiSelect('tracking', 'Fitbit', this)">📱 Fitbit</div>
-                    <div class="option" onclick="toggleMultiSelect('tracking', 'Apps mobiles', this)">📲 Apps mobiles</div>
-                    <div class="option" onclick="toggleMultiSelect('tracking', 'Balance connectée', this)">⚖️ Balance connectée</div>
-                    <div class="option" onclick="toggleMultiSelect('tracking', 'Aucun', this)">❌ Aucun</div>
-                </div>
-                <button class="btn-primary" onclick="if(validateMultiSelect('tracking')) goToNextScreen();" style="width: 100%; margin-top: 20px;">
-                    CONTINUER →
-                </button>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q34: CHARGE/PRESSION (Conditionnel) -->
-        <div id="screen-34" class="screen">
-            <div class="card">
-                <h2 class="question-text" id="q34-text">Question spécifique</h2>
-                <div class="options" id="q34-options"></div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q35: RELATIONS -->
-        <div id="screen-35" class="screen">
-            <div class="card">
-                <h2 class="question-text">Relations sociales épanouissantes :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('social_relations', 'Très riches et nombreuses'); goToNextScreen();">Très riches et nombreuses</div>
-                    <div class="option" onclick="answer('social_relations', 'Satisfaisantes'); goToNextScreen();">Satisfaisantes</div>
-                    <div class="option" onclick="answer('social_relations', 'Limitées'); goToNextScreen();">Limitées</div>
-                    <div class="option" onclick="answer('social_relations', 'Difficiles/conflictuelles'); goToNextScreen();">Difficiles/conflictuelles</div>
-                    <div class="option" onclick="answer('social_relations', 'Isolement social'); goToNextScreen();">Isolement social</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q36: VACANCES -->
-        <div id="screen-36" class="screen">
-            <div class="card">
-                <h2 class="question-text">Dernières vacances vraiment déconnectées :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('last_vacation', 'Il y a moins de 3 mois'); goToNextScreen();">Il y a moins de 3 mois</div>
-                    <div class="option" onclick="answer('last_vacation', '3-6 mois'); goToNextScreen();">3-6 mois</div>
-                    <div class="option" onclick="answer('last_vacation', '6-12 mois'); goToNextScreen();">6-12 mois</div>
-                    <div class="option" onclick="answer('last_vacation', 'Plus d\'un an'); goToNextScreen();">Plus d'un an</div>
-                    <div class="option" onclick="answer('last_vacation', 'Je ne déconnecte jamais'); goToNextScreen();">Je ne déconnecte jamais</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q37: PROJECTION 5 ANS -->
-        <div id="screen-37" class="screen">
-            <div class="card">
-                <h2 class="question-text">Sans changement, dans 5 ans tu seras :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('projection_5years', 'En meilleure forme (j\'optimise déjà)'); goToNextScreen();">En meilleure forme (j'optimise déjà)</div>
-                    <div class="option" onclick="answer('projection_5years', 'Stable (stagnation)'); goToNextScreen();">Stable (stagnation)</div>
-                    <div class="option" onclick="answer('projection_5years', 'Diminué(e) de 20%'); goToNextScreen();">Diminué(e) de 20%</div>
-                    <div class="option" onclick="answer('projection_5years', 'Très diminué(e) de 40%'); goToNextScreen();">Très diminué(e) de 40%</div>
-                    <div class="option" onclick="answer('projection_5years', 'J\'ai peur d\'y penser'); goToNextScreen();">J'ai peur d'y penser</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- WOW BREAK 5 - CSP -->
-        <div id="screen-wow5" class="screen">
-            <div class="card wow-break">
-                <div class="wow-header">
-                    <div class="wow-icon">💼</div>
-                    <h2 class="wow-title">L'INÉGALITÉ FACE À LA MORT</h2>
-                </div>
-                
-                <div class="wow-content">
-                    <span class="study-badge">📊 INSEE 2023 • FRANCE</span>
-                    
-                    <div class="wow-stat">Cadre = +7 ans de vie</div>
-                    
-                    <p style="text-align: center; font-weight: 600; color: var(--primary-blue); margin: 20px 0;">
-                        Ton métier prédit ta longévité
-                    </p>
-                    
-                    <div style="background: #F0F8FF; border: 1px solid #4A90E2; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                        <strong>Espérance de vie selon CSP :</strong><br>
-                        👔 Cadres supérieurs : 85 ans<br>
-                        💼 Professions intermédiaires : 82 ans<br>
-                        🔧 Ouvriers : 78 ans<br>
-                        🏭 Ouvriers non qualifiés : 76 ans
-                    </div>
-                    
-                    <div style="background: #FFF5F5; border-left: 3px solid #FF4444; padding: 15px; margin: 20px 0;">
-                        <strong>Pourquoi cette différence ?</strong><br>
-                        • Stress physique vs mental<br>
-                        • Accès aux soins et prévention<br>
-                        • Conditions de travail<br>
-                        • Connaissances santé
-                    </div>
-                    
-                    <p style="background: #E8F5E9; padding: 12px; border-radius: 8px; font-weight: 600; color: #2E7D32;">
-                        ✅ Le biohacking égalise les chances !
-                    </p>
-                    
-                    <div class="wow-source">
-                        Source : INSEE (2023) • insee.fr/fr/statistiques/6687000
-                    </div>
-                </div>
-                
-                <button class="btn-primary btn-green" onclick="goToNextScreen()">
-                    CONTINUER L'ANALYSE →
-                </button>
-            </div>
-        </div>
-
-        <!-- Q38: PLUS GRANDE PEUR -->
-        <div id="screen-38" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ta plus grande peur santé :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('biggest_fear', 'AVC/Crise cardiaque'); goToNextScreen();">AVC/Crise cardiaque</div>
-                    <div class="option" onclick="answer('biggest_fear', 'Cancer'); goToNextScreen();">Cancer</div>
-                    <div class="option" onclick="answer('biggest_fear', 'Alzheimer/Démence'); goToNextScreen();">Alzheimer/Démence</div>
-                    <div class="option" onclick="answer('biggest_fear', 'Dépendance physique'); goToNextScreen();">Dépendance physique</div>
-                    <div class="option" onclick="answer('biggest_fear', 'Mourir avant la retraite'); goToNextScreen();">Mourir avant la retraite</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q39: MOTIVATION (MULTI) -->
-        <div id="screen-39" class="screen">
-            <div class="card">
-                <h2 class="question-text">Ce qui te motive VRAIMENT à changer ?</h2>
-                <p class="multi-select-info">Choisis jusqu'à 3 motivations principales</p>
-                <div class="options options-grid" id="motivations-options">
-                    <div class="option" onclick="toggleMultiSelect('motivations', 'Voir mes petits-enfants grandir', this, 3)">👶 Voir mes petits-enfants grandir</div>
-                    <div class="option" onclick="toggleMultiSelect('motivations', 'Rester autonome jusqu\'au bout', this, 3)">🏃 Rester autonome jusqu'au bout</div>
-                    <div class="option" onclick="toggleMultiSelect('motivations', 'Continuer à performer', this, 3)">🚀 Continuer à performer</div>
-                    <div class="option" onclick="toggleMultiSelect('motivations', 'Être un exemple pour mes proches', this, 3)">⭐ Être un exemple pour mes proches</div>
-                    <div class="option" onclick="toggleMultiSelect('motivations', 'Ne pas souffrir', this, 3)">💊 Ne pas souffrir</div>
-                    <div class="option" onclick="toggleMultiSelect('motivations', 'Profiter de ma retraite', this, 3)">🌴 Profiter de ma retraite</div>
-                    <div class="option" onclick="toggleMultiSelect('motivations', 'Garder mon énergie', this, 3)">⚡ Garder mon énergie</div>
-                    <div class="option" onclick="toggleMultiSelect('motivations', 'Rester séduisant(e)', this, 3)">💫 Rester séduisant(e)</div>
-                </div>
-                <button class="btn-primary" onclick="if(validateMultiSelect('motivations')) goToNextScreen();" style="width: 100%; margin-top: 20px;">
-                    CONTINUER →
-                </button>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q40: BUDGET -->
-        <div id="screen-40" class="screen">
-            <div class="card">
-                <h2 class="question-text">Budget mensuel pour ta santé :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('budget', 'Moins de 50€'); goToNextScreen();">Moins de 50€</div>
-                    <div class="option" onclick="answer('budget', '50-150€'); goToNextScreen();">50-150€</div>
-                    <div class="option" onclick="answer('budget', '150-300€'); goToNextScreen();">150-300€</div>
-                    <div class="option" onclick="answer('budget', '300-500€'); goToNextScreen();">300-500€</div>
-                    <div class="option" onclick="answer('budget', 'Plus de 500€'); goToNextScreen();">Plus de 500€</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- Q41: TEMPS DISPONIBLE -->
-        <div id="screen-41" class="screen">
-            <div class="card">
-                <h2 class="question-text">Temps disponible par jour pour ta santé :</h2>
-                <div class="options">
-                    <div class="option" onclick="answer('time_available', 'Moins de 15min'); goToNextScreen();">Moins de 15min</div>
-                    <div class="option" onclick="answer('time_available', '15-30min'); goToNextScreen();">15-30min</div>
-                    <div class="option" onclick="answer('time_available', '30-60min'); goToNextScreen();">30-60min</div>
-                    <div class="option" onclick="answer('time_available', '1-2h'); goToNextScreen();">1-2h</div>
-                    <div class="option" onclick="answer('time_available', 'Plus de 2h'); goToNextScreen();">Plus de 2h</div>
-                </div>
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- WOW BREAK 6 FINAL -->
-        <div id="screen-wow6" class="screen">
-            <div class="card wow-break">
-                <div class="wow-header">
-                    <div class="wow-icon">⚡</div>
-                    <h2 class="wow-title">TU CONTRÔLES TON DESTIN</h2>
-                </div>
-                
-                <div class="wow-content">
-                    <span class="study-badge">📊 SCIENCE • 2,748 JUMEAUX • 40 ANS D'ÉTUDE</span>
-                    
-                    <div class="wow-stat">77% = Tes choix</div>
-                    
-                    <p style="text-align: center; font-weight: 600; color: var(--primary-blue); margin: 20px 0;">
-                        Génétique = seulement 23% !
-                    </p>
-                    
-                    <div style="background: #E8F5E9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                        <strong>En 12 semaines tu peux :</strong><br>
-                        ✓ Modifier 500+ gènes<br>
-                        ✓ Inverser 3 ans d'âge cellulaire<br>
-                        ✓ Activer tes gènes de longévité<br>
-                        ✓ Reprogrammer ton métabolisme
-                    </div>
-                    
-                    <p style="text-align: center; font-size: 20px; font-weight: 700; color: var(--accent-green); margin: 30px 0;">
-                        Prêt(e) pour TON protocole personnalisé ?
-                    </p>
-                    
-                    <div class="wow-source">
-                        Source : Science (2018) • DOI: 10.1126/science.aat7615
-                    </div>
-                </div>
-                
-                <button class="btn-primary btn-green" onclick="goToNextScreen()">
-                    DÉCOUVRIR MON SCORE →
-                </button>
-            </div>
-        </div>
-
-
-        <!-- ÉCRAN EMAIL -->
-        <div id="screen-email" class="screen">
-            <div class="card">
-                <h2 class="question-text">📊 Dernière étape !</h2>
-                <p class="subtitle" style="text-align: center; margin-bottom: 30px;">
-                    Reçois ton score détaillé par email<br>
-                    <strong>100% gratuit • Résultats immédiats</strong>
-                </p>
-                
-                <div class="form-group">
-                    <label class="form-label" for="firstname">Prénom *</label>
-                    <input 
-                        type="text" 
-                        id="firstname" 
-                        class="form-input" 
-                        placeholder="Ton prénom"
-                        required
-                    >
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="email">Email *</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        class="form-input" 
-                        placeholder="ton@email.com"
-                        required
-                    >
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="phone">Téléphone *</label>
-                    <input 
-                        type="tel" 
-                        id="phone" 
-                        class="form-input" 
-                        placeholder="06 XX XX XX XX"
-                        required
-                    >
-                </div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="consent" class="checkbox" required>
-                    <label for="consent" style="font-size: 13px; color: var(--text-light);">
-                        J'accepte de recevoir mon <strong>score détaillé par email</strong> 
-                        et les conseils personnalisés OraLife par SMS/WhatsApp
-                        <br><span style="font-size: 11px; opacity: 0.8;">
-                        (Désinscription 1 clic • Jamais de spam • RGPD compliant)
-                        </span>
-                    </label>
-                </div>
-                
-                <button class="btn-primary btn-green" onclick="submitEmail()" style="width: 100%; margin-top: 20px;">
-                    VOIR MON SCORE →
-                </button>
-                
-                <p style="text-align: center; font-size: 12px; color: var(--text-light); margin-top: 20px;">
-                    🔒 Données 100% sécurisées • Serveurs en France
-                </p>
-                
-                <button class="btn-back" onclick="goToPrevScreen()">← Retour</button>
-            </div>
-        </div>
-
-        <!-- ÉCRAN CALCUL -->
-        <div id="screen-calculating" class="screen">
-            <div class="card" style="text-align: center;">
-                <h2 style="color: var(--primary-blue); margin-bottom: 30px;">
-                    Analyse de tes réponses en cours...
-                </h2>
-                
-                <div class="score-circle">
-                    <svg width="180" height="180">
-                        <circle cx="90" cy="90" r="80" fill="none" stroke="#E0E0E0" stroke-width="10"/>
-                        <circle 
-                            cx="90" cy="90" r="80" 
-                            fill="none" 
-                            stroke="url(#gradient)" 
-                            stroke-width="10"
-                            stroke-dasharray="502"
-                            stroke-dashoffset="502"
-                            transform="rotate(-90 90 90)"
-                            style="animation: fillCircle 3s ease-in-out forwards;"
-                        />
-                        <defs>
-                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" style="stop-color:var(--primary-blue);stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:var(--accent-green);stop-opacity:1" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div class="score-value">
-                        <span class="loading"></span>
-                    </div>
-                </div>
-                
-                <div id="calculatingSteps" style="margin-top: 30px;">
-                    <p style="color: var(--text-light); margin: 10px 0;">
-                        <span id="step1" style="opacity: 0.3;">✓ Analyse de ton profil métabolique...</span>
-                    </p>
-                    <p style="color: var(--text-light); margin: 10px 0;">
-                        <span id="step2" style="opacity: 0.3;">✓ Calcul de ton âge biologique...</span>
-                    </p>
-                    <p style="color: var(--text-light); margin: 10px 0;">
-                        <span id="step3" style="opacity: 0.3;">✓ Génération de tes recommandations...</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- ÉCRAN RÉSULTATS -->
-        <div id="screen-results" class="screen">
-            <div class="card">
-                <h1 style="text-align: center; color: var(--primary-blue); margin-bottom: 20px;">
-                    Ton Score de Vieillissement
-                </h1>
-                
-                <div class="score-circle">
-                    <svg width="180" height="180">
-                        <circle cx="90" cy="90" r="80" fill="none" stroke="#E0E0E0" stroke-width="10"/>
-                        <circle 
-                            id="scoreCircle"
-                            cx="90" cy="90" r="80" 
-                            fill="none" 
-                            stroke="url(#gradient2)" 
-                            stroke-width="10"
-                            stroke-dasharray="502"
-                            stroke-dashoffset="502"
-                            transform="rotate(-90 90 90)"
-                        />
-                        <defs>
-                            <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" style="stop-color:var(--primary-blue);stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:var(--accent-green);stop-opacity:1" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div class="score-value" id="finalScore">--</div>
-                </div>
-                
-                <div id="scoreInterpretation" style="text-align: center; margin: 20px 0;">
-                    <!-- Sera rempli dynamiquement -->
-                </div>
-                
-                <div class="results-details">
-                    <h3 style="color: var(--primary-blue); margin-bottom: 15px;">
-                        📊 Ton Analyse Détaillée :
-                    </h3>
-                    <div id="detailedResults">
-                        <!-- Sera rempli dynamiquement -->
-                    </div>
-                </div>
-
-                <!-- ALERTE SCIENTIFIQUE -->
-                <div class="scientific-alert">
-                    <h3>📊 TENDANCE BASÉE SUR TES RÉPONSES</h3>
-                    
-                    <div class="study-card">
-                        <div class="study-stat" id="risk-stat">--</div>
-                        <p id="risk-text">--</p>
-                    </div>
-                    
-                    <div class="countdown-box">
-                        <h4>Projection sur 10 ans (basée sur ton profil) :</h4>
-                        <ul id="future-risks">
-                            <!-- Sera rempli dynamiquement -->
-                        </ul>
-                    </div>
-                    
-                    <div class="transformation-promise">
-                        <h4>AVEC le protocole OraLife :</h4>
-                        <ul>
-                            <li>✅ Optimisation ciblée de tes biomarqueurs</li>
-                            <li>✅ Protocole personnalisé basé sur tes données</li>
-                            <li>✅ Suivi avec analyses sanguines avancées</li>
-                            <li>✅ Résultats mesurables dès 30 jours</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div style="background: linear-gradient(135deg, #FFE5E5 0%, #FFEDED 100%); 
-                            border-left: 4px solid #FF4444; 
-                            padding: 20px; 
-                            border-radius: 10px; 
-                            margin: 30px 0;">
-                    <h3 style="color: #CC0000; margin-bottom: 10px;">
-                        ⚠️ Points d'Attention (basés sur tes réponses) :
-                    </h3>
-                    <div id="urgentPoints">
-                        <!-- Sera rempli dynamiquement -->
-                    </div>
-                </div>
-                
-                <div style="background: linear-gradient(135deg, #E5FFE5 0%, #EDFFED 100%); 
-                            border-left: 4px solid var(--accent-green); 
-                            padding: 20px; 
-                            border-radius: 10px; 
-                            margin: 30px 0;">
-                    <h3 style="color: #008800; margin-bottom: 10px;">
-                        ✅ Tes Forces Actuelles :
-                    </h3>
-                    <div id="strengthPoints">
-                        <!-- Sera rempli dynamiquement -->
-                    </div>
-                </div>
-
-                <!-- CTA FINAL -->
-                <div class="final-cta">
-                    <div class="scarcity">
-                        ⏰ Offre limitée : -50% pour les 48 prochaines heures
-                    </div>
-                    
-                    <button class="btn-pulse" onclick="bookCall()">
-                        📞 RÉSERVER MON APPEL STRATÉGIQUE GRATUIT
-                        <span class="subtitle">15 min avec un expert biohacking</span>
+                    <button id="start-quiz" class="btn-primary btn-large">
+                        Commencer l'Évaluation Gratuite
+                        <span class="arrow">→</span>
                     </button>
-                    
-                    <div class="social-proof">
-                        <div class="testimonial-ticker">
-                            "J'ai gagné 10 ans de vie en 3 mois" - Marc, 47 ans, CEO
-                        </div>
+
+                    <div class="trust-indicators">
+                        <p class="participants">
+                            <strong>2,847</strong> personnes ont déjà optimisé leur vitalité
+                        </p>
+                        <p class="time-info">
+                            ⏱️ 3-4 minutes • 100% gratuit • Résultats immédiats
+                        </p>
                     </div>
-                    
-                    <p class="guarantee">
-                        💯 Garantie 30 jours satisfait ou remboursé
-                    </p>
                 </div>
-                
-                <p style="text-align: center; font-size: 12px; color: var(--text-light); margin-top: 20px;">
-                    📧 Ton score détaillé a été envoyé à <span id="userEmail"></span>
-                </p>
             </div>
-        </div>
+
+            <!-- Quiz Screen -->
+            <div id="quiz-screen" class="screen">
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <span id="progress-text" class="progress-text">Question 1 sur 38</span>
+                </div>
+
+                <!-- Question Container -->
+                <div id="question-container" class="question-container">
+                    <!-- Questions seront injectées ici par JavaScript -->
+                </div>
+
+                <!-- Navigation -->
+                <div class="navigation">
+                    <button id="prev-btn" class="btn-secondary" style="display: none;">
+                        ← Retour
+                    </button>
+                    <button id="next-btn" class="btn-primary" disabled>
+                        Suivant →
+                    </button>
+                </div>
+            </div>
+
+            <!-- WOW Break Screen -->
+            <div id="wow-screen" class="screen">
+                <div class="wow-content">
+                    <!-- WOW breaks seront injectés ici -->
+                </div>
+            </div>
+
+            <!-- Loading Screen -->
+            <div id="loading-screen" class="screen">
+                <div class="loader-wrapper">
+                    <div class="loader"></div>
+                    <h2>Analyse de tes réponses en cours...</h2>
+                    <p>Calcul de ton score basé sur 12+ études scientifiques</p>
+                </div>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="results-screen" class="screen">
+                <div id="results-container" class="results-container">
+                    <!-- Résultats seront injectés ici par JavaScript -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="quiz-footer">
+            <p>&copy; 2024 ORA Life - Science-Based Longevity</p>
+        </footer>
     </div>
 
-    <script src="/quiz.js"></script>
-
-    <!-- Google Analytics (optionnel) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'GA_MEASUREMENT_ID');
-    </script>
+    <!-- Scripts -->
+    <script src="quiz.js"></script>
 </body>
 </html>
-
