@@ -1,5 +1,5 @@
 // api/questions.js - Vercel Function avec TOUTES tes questions exactes
-const QUIZ_CONFIG = require('./config');
+import QUIZ_CONFIG from './config.js';
 
 export default function handler(req, res) {
   // CORS headers
