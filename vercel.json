@@ -1,21 +1,14 @@
 {
   "version": 2,
-  "routes": [
+  "functions": {
+    "api/*.js": {
+      "runtime": "@vercel/node@20"
+    }
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/styles.css",
-      "dest": "/public/styles.css"
-    },
-    {
-      "src": "/quiz.js", 
-      "dest": "/public/quiz.js"
-    },
-    {
-      "src": "/",
-      "dest": "/public/index.html"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     }
   ]
 }
