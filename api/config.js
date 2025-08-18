@@ -252,4 +252,4 @@ export const QUIZ_CONFIG = {
 };
 
 // Export pour utilisation dans les autres fichiers API
-module.exports = QUIZ_CONFIG;
+export default QUIZ_CONFIG;
