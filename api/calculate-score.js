@@ -1,7 +1,7 @@
 // api/calculate-score.js - Vercel Function
 // Algorithme de scoring basé sur la littérature scientifique
 
-const QUIZ_CONFIG = require('./config');
+import QUIZ_CONFIG from './config.js';
 
 export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -356,3 +356,4 @@ function findQuestionById(questionId) {
     ]
   };
 }
+
