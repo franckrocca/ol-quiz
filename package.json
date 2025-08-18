@@ -1,12 +1,21 @@
 {
   "name": "ol-quiz",
   "version": "1.0.0",
-  "description": "ORA Life Quiz",
-  "main": "index.js",
+  "description": "Quiz Biohacking OraLife - Score de Vieillissement",
+  "main": "index.html",
   "scripts": {
-    "start": "echo 'No start script needed'"
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
   },
-  "dependencies": {
-    "@vercel/node": "^3.0.0"
+  "keywords": [
+    "biohacking",
+    "quiz",
+    "health",
+    "oralife"
+  ],
+  "author": "OraLife",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
   }
 }
