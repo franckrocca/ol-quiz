@@ -34,7 +34,8 @@ export default function handler(req, res) {
       inputs: [
         { key: 'weight', placeholder: 'Poids (kg)', type: 'number' },
         { key: 'height', placeholder: 'Taille (cm)', type: 'number' }
-      ]
+      ],
+      showIMC: true
     },
     {
       id: 4,
@@ -44,14 +45,12 @@ export default function handler(req, res) {
       type: 'multi-select',
       maxChoices: 3,
       options: [
-        'Perdre du gras',
-        'Gagner du muscle',
-        'Plus d\'énergie',
-        'Mieux dormir',
-        'Moins de stress',
-        'Améliorer ma concentration',
-        'Ralentir le vieillissement',
-        'Optimiser ma santé'
+        'Énergie illimitée',
+        'Corps optimal',
+        'Mental sharp',
+        'Longévité maximale',
+        'Sommeil réparateur',
+        'Zéro stress'
       ]
     },
     {
@@ -60,11 +59,11 @@ export default function handler(req, res) {
       text: 'Comparé à il y a 3 ans, ton énergie c\'est :',
       type: 'single',
       options: [
-        'Bien mieux qu\'avant',
-        'Un peu mieux',
-        'Pareil (stable)',
-        'Un peu moins bien',
-        'Beaucoup moins bien'
+        'Mieux qu\'avant',
+        'Identique',
+        '-20% environ',
+        '-40% environ',
+        '-60% ou plus'
       ]
     },
     {
@@ -76,8 +75,8 @@ export default function handler(req, res) {
         'Cette semaine',
         'Ce mois-ci',
         'Cette année',
-        'Il y a 2-3 ans',
-        'Je ne m\'en souviens plus'
+        'L\'année dernière',
+        'Je ne sais plus'
       ]
     },
     {
@@ -88,9 +87,9 @@ export default function handler(req, res) {
       options: [
         'Trop d\'infos contradictoires',
         'Manque de temps',
-        'Pas de motivation',
+        'J\'ai essayé sans résultats',
         'Trop cher',
-        'Je ne savais pas par où commencer'
+        'Je ne savais pas comment'
       ]
     },
     {
@@ -99,11 +98,11 @@ export default function handler(req, res) {
       text: 'Test de l\'escalier (2 étages sans pause) :',
       type: 'single',
       options: [
-        'Facile, je pourrais continuer',
-        'OK mais légèrement essoufflé',
-        'Difficile, bien essoufflé',
-        'Très dur, obligé de m\'arrêter',
-        'Impossible sans pause'
+        'Facile, en parlant',
+        'Léger essoufflement',
+        'Besoin de reprendre mon souffle',
+        'Très difficile',
+        'J\'évite les escaliers'
       ]
     },
     {
@@ -114,9 +113,9 @@ export default function handler(req, res) {
       options: [
         'Moins de 4h',
         '4-6h',
-        '7-9h',
-        '10-12h',
-        'Plus de 12h'
+        '6-8h',
+        '8-10h',
+        'Plus de 10h'
       ]
     },
     {
@@ -128,21 +127,38 @@ export default function handler(req, res) {
         '0 (sommeil parfait)',
         '1 fois',
         '2-3 fois',
-        '4-5 fois',
-        'Plus de 5 fois'
+        '4+ fois',
+        'Insomnie chronique'
+      ]
+    },
+    {
+      id: 11,
+      key: 'femaleSpecific',
+      text: 'Où en es-tu dans ton cycle féminin ?',
+      type: 'single',
+      conditional: { gender: 'femme' },
+      options: [
+        'Cycle régulier parfait',
+        'Cycle irrégulier',
+        'Grossesse',
+        'Post-partum',
+        'Péri-ménopause',
+        'Ménopause',
+        'Post-ménopause'
       ]
     },
     {
       id: 11,
       key: 'libido',
-      text: 'Libido et énergie sexuelle :',
+      text: 'Ta libido actuellement :',
       type: 'single',
+      conditional: { gender: 'homme' },
       options: [
-        'Au top, comme à 20 ans',
-        'Plutôt bien',
-        'Correct mais en baisse',
-        'Clairement diminuée',
-        'Plus vraiment d\'intérêt'
+        'Au top comme à 20 ans',
+        'Correcte',
+        'En baisse notable',
+        'Très diminuée',
+        'Problématique'
       ]
     },
     {
@@ -151,11 +167,11 @@ export default function handler(req, res) {
       text: 'Ton premier crash énergétique arrive :',
       type: 'single',
       options: [
-        'Jamais de crash',
+        'Jamais',
         'Après 17h',
-        'Vers 14-15h',
-        'Dès 11h',
-        'Fatigué dès le réveil'
+        'Vers 14h-15h',
+        'Juste après le déjeuner',
+        'Dès le matin'
       ]
     },
     {
@@ -164,11 +180,11 @@ export default function handler(req, res) {
       text: 'Ton poids vs ton idéal :',
       type: 'single',
       options: [
-        'Pile mon poids idéal',
-        '+/- 3kg de mon idéal',
-        '+5 à 10kg',
-        '+10 à 20kg',
-        '+20kg ou plus'
+        'Parfait',
+        '+2-5 kg',
+        '+5-10 kg',
+        '+10-15 kg',
+        '+15 kg ou plus'
       ]
     },
     {
@@ -190,11 +206,11 @@ export default function handler(req, res) {
       text: 'Douleurs articulaires :',
       type: 'single',
       options: [
-        'Aucune douleur',
-        'Petites gênes occasionnelles',
-        'Douleurs régulières mais gérables',
-        'Douleurs qui limitent mes activités',
-        'Douleurs chroniques handicapantes'
+        'Jamais',
+        'Après effort intense uniquement',
+        'Le matin au réveil',
+        'Régulièrement dans la journée',
+        'Douleurs chroniques permanentes'
       ]
     },
     {
@@ -203,119 +219,106 @@ export default function handler(req, res) {
       text: 'Ta mémoire et concentration :',
       type: 'single',
       options: [
-        'Sharp comme un laser',
-        'Plutôt bonnes',
-        'Des moments de flou',
+        'Excellentes',
+        'Quelques oublis mineurs',
         'Difficultés fréquentes',
-        'Brouillard mental constant'
+        'Brouillard mental régulier',
+        'Très inquiétant'
       ]
     },
     {
       id: 17,
-      key: 'symptoms',
-      text: 'Masse musculaire et force :',
-      type: 'single',
-      options: [
-        'Muscle et force au top',
-        'Maintien correct',
-        'Légère perte visible',
-        'Perte importante',
-        'Fonte musculaire inquiétante'
-      ]
-    },
-    {
-      id: 18,
       key: 'recovery',
       text: 'Récupération après effort physique :',
       type: 'single',
       options: [
-        '24h max',
-        '48h environ',
-        '3-4 jours',
-        'Une semaine',
-        'Courbatures permanentes'
+        'Moins de 24h',
+        '24-48h',
+        '2-3 jours',
+        '4-7 jours',
+        'Plus d\'une semaine'
       ]
     },
     {
-      id: 19,
+      id: 18,
       key: 'stress',
       text: 'Niveau de stress chronique :',
       type: 'single',
       options: [
-        'Zen en toutes circonstances',
-        'Stress ponctuel gérable',
-        'Stress régulier',
-        'Stress quotidien élevé',
-        'Burnout/épuisement'
+        'Zen permanent',
+        'Gérable la plupart du temps',
+        'Élevé régulièrement',
+        'Très élevé quotidiennement',
+        'Mode survie/burnout'
       ]
     },
     {
-      id: 20,
+      id: 19,
       key: 'skin',
       text: 'Qualité de ta peau :',
       type: 'single',
       options: [
-        'Peau de bébé',
-        'Quelques imperfections',
-        'Rides et ridules visibles',
-        'Vieillissement marqué',
-        'Problèmes cutanés multiples'
+        'Éclatante et ferme',
+        'Correcte pour mon âge',
+        'Terne et fatiguée',
+        'Rides marquées',
+        'Très vieillie prématurément'
       ]
     },
     {
-      id: 21,
+      id: 20,
       key: 'environment',
       text: 'Ton environnement principal :',
       type: 'single',
       options: [
-        'Campagne/nature',
-        'Petite ville',
-        'Ville moyenne',
-        'Grande ville',
-        'Mégapole polluée'
+        'Nature/campagne (air pur)',
+        'Petite ville (<50k habitants)',
+        'Ville moyenne (50-200k)',
+        'Grande ville (200k-1M)',
+        'Mégapole (Paris, Lyon, Marseille)'
       ]
     },
     {
-      id: 22,
+      id: 21,
       key: 'sun',
       text: 'Exposition soleil (peau nue) :',
       type: 'single',
       options: [
-        '30min+ par jour',
-        '15-30min par jour',
-        'Quelques fois par semaine',
+        '30min+ quotidien',
+        '15-30min régulier',
+        'Quelques fois/semaine',
         'Rarement',
-        'Jamais (mode vampire)'
+        'Jamais (vampire mode)'
       ]
     },
     {
-      id: 23,
+      id: 22,
       key: 'nature',
       text: 'Temps en nature par semaine :',
       type: 'single',
       options: [
-        'Je vis dans la nature',
         'Plus de 10h',
         '5-10h',
-        '1-5h',
-        '0h (100% béton)'
+        '2-5h',
+        'Moins de 2h',
+        'Zéro'
       ]
     },
     {
-      id: 24,
+      id: 23,
       key: 'sleepQuality',
       text: 'Qualité de ton sommeil :',
       type: 'single',
       options: [
-        'Parfait, je me réveille en forme',
-        'Plutôt bon',
-        'Variable',
-        'Souvent mauvais',
+        '7-9h de sommeil profond',
+        '6-7h correct',
+        '5-6h léger et fragmenté',
+        'Moins de 5h',
         'Insomnie chronique'
       ]
     },
     {
-      id: 25,
+      id: 24,
       key: 'bedtime',
       text: 'Heure habituelle du coucher :',
       type: 'single',
@@ -324,37 +327,37 @@ export default function handler(req, res) {
         '22h-23h',
         '23h-minuit',
         'Minuit-1h',
-        'Après 1h'
+        'Après 1h du matin'
       ]
     },
     {
-      id: 26,
+      id: 25,
       key: 'screens',
       text: 'Écrans avant de dormir :',
       type: 'single',
       options: [
-        'Jamais (livre/méditation)',
-        'Arrêt 2h avant',
-        'Arrêt 1h avant',
-        'Jusqu\'au lit',
-        'Je m\'endors avec'
+        'Jamais (coupure 2h avant)',
+        'Avec lunettes anti-lumière bleue',
+        'Parfois',
+        'Toujours',
+        'Jusqu\'au lit'
       ]
     },
     {
-      id: 27,
+      id: 26,
       key: 'breakfast',
       text: 'Ton petit-déjeuner type :',
       type: 'single',
       options: [
-        'Protéines + gras (œufs, avocat)',
-        'Équilibré (complet)',
-        'Céréales/muesli',
+        'Jeûne intermittent',
+        'Protéines + bons gras',
+        'Céréales complètes + fruits',
         'Sucré (pain blanc, confiture)',
         'Juste café/rien'
       ]
     },
     {
-      id: 28,
+      id: 27,
       key: 'hydration',
       text: 'Hydratation quotidienne (eau pure) :',
       type: 'single',
@@ -367,7 +370,7 @@ export default function handler(req, res) {
       ]
     },
     {
-      id: 29,
+      id: 28,
       key: 'alcohol',
       text: 'Consommation d\'alcool par semaine :',
       type: 'single',
@@ -380,108 +383,108 @@ export default function handler(req, res) {
       ]
     },
     {
-      id: 30,
+      id: 29,
       key: 'activities',
       text: 'Tes activités physiques régulières ?',
       subtitle: 'Choisis toutes celles que tu pratiques',
       type: 'multi-select',
       options: [
-        'Musculation',
         'Course à pied',
+        'Musculation',
+        'HIIT/CrossFit',
         'Yoga/Pilates',
-        'Sports collectifs',
         'Natation',
         'Vélo',
         'Marche active',
+        'Sports collectifs',
         'Arts martiaux',
-        'CrossFit/HIIT',
         'Aucune activité'
       ]
     },
     {
-      id: 31,
+      id: 30,
       key: 'frequency',
       text: 'Fréquence d\'activité physique :',
       type: 'single',
       options: [
-        '6-7x par semaine',
-        '4-5x par semaine',
-        '2-3x par semaine',
-        '1x par semaine',
-        'Jamais'
+        'Tous les jours',
+        '4-6 fois/semaine',
+        '2-3 fois/semaine',
+        '1 fois/semaine',
+        'Rarement ou jamais'
       ]
     },
     {
-      id: 32,
+      id: 31,
       key: 'supplements',
       text: 'Compléments alimentaires :',
       type: 'single',
       options: [
-        'Stack complet optimisé',
-        'Quelques basiques (vitamines)',
-        'Occasionnellement',
+        'Protocole complet personnalisé',
+        'Basiques (Vit D, Omega 3, Magnésium)',
+        'Occasionnels',
         'Jamais',
-        'N\'importe quoi sans stratégie'
+        'Je ne sais pas quoi prendre'
       ]
     },
     {
-      id: 33,
+      id: 32,
       key: 'tracking',
       text: 'Outils de tracking santé ?',
       subtitle: 'Choisis tous ceux que tu utilises',
       type: 'multi-select',
       options: [
-        'Montre connectée',
-        'Balance intelligente',
-        'App de sommeil',
-        'App nutrition',
-        'Tracker d\'activité',
-        'Tensiomètre',
-        'Glucomètre',
-        'Aucun tracking'
+        'Apple Watch',
+        'Garmin',
+        'Whoop',
+        'Oura Ring',
+        'Fitbit',
+        'Apps mobiles',
+        'Balance connectée',
+        'Aucun'
       ]
     },
     {
-      id: 34,
+      id: 33,
       key: 'social',
       text: 'Relations sociales épanouissantes :',
       type: 'single',
       options: [
-        'Entourage au top',
-        'Plutôt bien entouré',
-        'Quelques bonnes relations',
-        'Peu de vraies connexions',
+        'Très riches et nombreuses',
+        'Satisfaisantes',
+        'Limitées',
+        'Difficiles/conflictuelles',
         'Isolement social'
       ]
     },
     {
-      id: 35,
+      id: 34,
       key: 'vacations',
       text: 'Dernières vacances vraiment déconnectées :',
       type: 'single',
       options: [
-        'Ce mois-ci',
-        'Cette année',
-        'L\'année dernière',
-        'Il y a 2-3 ans',
+        'Il y a moins de 3 mois',
+        '3-6 mois',
+        '6-12 mois',
+        'Plus d\'un an',
         'Je ne déconnecte jamais'
       ]
     },
     {
-      id: 36,
+      id: 35,
       key: 'projection',
       text: 'Sans changement, dans 5 ans tu seras :',
       type: 'single',
       options: [
-        'En pleine forme',
-        'À peu près pareil',
-        'Un peu diminué',
-        'Sérieusement dégradé',
-        'Dans un état critique'
+        'En meilleure forme (j\'optimise déjà)',
+        'Stable (stagnation)',
+        'Diminué(e) de 20%',
+        'Très diminué(e) de 40%',
+        'J\'ai peur d\'y penser'
       ]
     },
     {
-      id: 37,
+      id: 36,
       key: 'fear',
       text: 'Ta plus grande peur santé :',
       type: 'single',
@@ -494,7 +497,7 @@ export default function handler(req, res) {
       ]
     },
     {
-      id: 38,
+      id: 37,
       key: 'motivation',
       text: 'Ce qui te motive VRAIMENT à changer ?',
       subtitle: 'Choisis jusqu\'à 3 motivations principales',
@@ -512,7 +515,7 @@ export default function handler(req, res) {
       ]
     },
     {
-      id: 39,
+      id: 38,
       key: 'budget',
       text: 'Budget mensuel pour ta santé :',
       type: 'single',
@@ -525,7 +528,7 @@ export default function handler(req, res) {
       ]
     },
     {
-      id: 40,
+      id: 39,
       key: 'time',
       text: 'Temps disponible par jour pour ta santé :',
       type: 'single',
@@ -539,9 +542,125 @@ export default function handler(req, res) {
     }
   ];
 
+  // WOW Breaks positions
+  const wowBreaks = [
+    {
+      id: 'wow1',
+      position: 10,
+      icon: '💺',
+      title: 'TA CHAISE TE TUE',
+      badge: 'MÉTA-ANALYSE • 595,086 PARTICIPANTS',
+      mainStat: '10h assis = +52% mortalité',
+      stats: [
+        '4h assis ✅ Risque minimal',
+        '7h assis = +5% mortalité',
+        '10h assis = +34% (avec sport)',
+        '10h assis = +52% (sans sport)'
+      ],
+      solution: 'Solution : Pause active toutes les heures',
+      source: 'PLOS ONE (2013) • PMID: 23826128'
+    },
+    {
+      id: 'wow2',
+      position: 16,
+      icon: '🧠',
+      title: 'TON VENTRE CONTRÔLE TON CERVEAU',
+      badge: 'NATURE MICROBIOLOGY • 1,054 PARTICIPANTS',
+      mainStat: '95% sérotonine = intestin',
+      highlight: 'Ton bonheur vient littéralement du ventre !',
+      stats: [
+        'Intestin déréglé = +43% dépression',
+        'Intestin déréglé = +38% anxiété',
+        'Intestin déréglé = +52% inflammation',
+        'Intestin déréglé = -27% performances cognitives'
+      ],
+      solution: '3 semaines de probiotiques = humeur transformée',
+      source: 'Nature Microbiology (2023) • DOI: 10.1038/s41564-023-01339-5'
+    },
+    {
+      id: 'wow3',
+      position: 24,
+      icon: '🏭',
+      title: 'L\'AIR QUI TUE',
+      badge: 'THE LANCET • 7 MILLIONS MORTS/AN',
+      mainStat: 'Ville = -2.2 ans de vie',
+      stats: [
+        'PM2.5 > 10 μg/m³ = +15% maladies cardiaques',
+        'PM2.5 > 10 μg/m³ = +25% déclin cognitif',
+        'PM2.5 > 10 μg/m³ = +30% inflammation',
+        'PM2.5 > 10 μg/m³ = -20% capacité pulmonaire'
+      ],
+      comparison: 'Paris: 15-20 μg/m³ | Lyon: 18-22 μg/m³ | Campagne: 5-8 μg/m³',
+      source: 'The Lancet (2022) • DOI: 10.1016/S2542-5196(22)00090-0'
+    },
+    {
+      id: 'wow4',
+      position: 32,
+      icon: '💊',
+      title: 'LE SUPER-POUVOIR CACHÉ',
+      badge: 'CELL • HARVARD MEDICAL SCHOOL',
+      mainStat: 'NAD+ : -50% à 50 ans',
+      highlight: 'La molécule qui contrôle ton vieillissement',
+      boostMethods: [
+        'Jeûne intermittent = +30% NAD+',
+        'HIIT = +25% NAD+',
+        'Sauna = +20% NAD+',
+        'NMN/NR = +40-60% NAD+'
+      ],
+      benefits: [
+        '✓ Énergie cellulaire',
+        '✓ Réparation ADN',
+        '✓ Régénération',
+        '✓ Fonction cognitive'
+      ],
+      source: 'Cell (2024) • DOI: 10.1016/j.cell.2024.01.002'
+    },
+    {
+      id: 'wow5',
+      position: 36,
+      icon: '⚰️',
+      title: 'L\'INÉGALITÉ FACE À LA MORT',
+      badge: 'INSEE 2023 • FRANCE',
+      mainStat: 'Cadre = +7 ans de vie',
+      stats: [
+        '👔 Cadres supérieurs : 85 ans',
+        '💼 Professions intermédiaires : 82 ans',
+        '🔨 Ouvriers : 78 ans',
+        '👷 Ouvriers non qualifiés : 76 ans'
+      ],
+      reasons: [
+        'Stress physique vs mental',
+        'Accès aux soins et prévention',
+        'Conditions de travail',
+        'Connaissances santé'
+      ],
+      solution: 'Le biohacking égalise les chances !',
+      source: 'INSEE (2023) • insee.fr/fr/statistiques/6687000'
+    },
+    {
+      id: 'wow6',
+      position: 39,
+      icon: '🧬',
+      title: 'TU CONTRÔLES TON DESTIN',
+      badge: 'GENETICS • 400M PROFILS • 40 ANS D\'ÉTUDE',
+      mainStat: '7% Génétique | 93% Tes choix',
+      highlight: 'La génétique n\'explique que 7% de la longévité !',
+      breakdown: 'Le reste se gagne au quotidien',
+      stats: [
+        '✅ Étude sur 400 millions de profils',
+        '✅ L\'héritabilité réelle est minime',
+        '✅ Tu es le maître de ton destin',
+        '✅ Tes choix quotidiens = 93% du résultat'
+      ],
+      solution: 'Ton protocole personnalisé Ora Life',
+      source: 'Ruby et al., Genetics (2018) • PMC6661543'
+    }
+  ];
+
   res.status(200).json({ 
     success: true, 
     questions,
+    wowBreaks,
     total: questions.length
   });
 }
