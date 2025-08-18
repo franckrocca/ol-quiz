@@ -742,7 +742,45 @@ h1 {
     border-top: 1px solid var(--border);
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== MULTI-SELECT AVEC CHECKBOX ===== */
+.multi-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-icon {
+    font-size: 20px;
+    color: var(--text-light);
+    transition: all 0.3s ease;
+    min-width: 24px;
+}
+
+.multi-option.selected .checkbox-icon {
+    color: var(--accent-green);
+    font-weight: bold;
+}
+
+.option-text {
+    flex: 1;
+}
+
+/* ===== IMC DISPLAY ===== */
+.imc-display {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* ===== FIX DOUBLE CLICK ===== */
+.option {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.option:active {
+    transform: scale(0.98);
+}
 @media (max-width: 640px) {
     .card {
         padding: 20px;
