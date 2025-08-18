@@ -1,24 +1,21 @@
 {
   "name": "ol-quiz",
   "version": "1.0.0",
-  "description": "OraLife Quiz - Score de Vitalité",
-  "main": "index.html",
-  "type": "module",
+  "description": "OraLife Quiz - Test de vieillissement biologique",
+  "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'No build needed'",
     "deploy": "vercel --prod"
   },
   "keywords": [
     "biohacking",
-    "health",
     "quiz",
-    "biological-age",
-    "oralife"
+    "health",
+    "longevity"
   ],
   "author": "OraLife",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
+  "license": "ISC",
+  "devDependencies": {
+    "vercel": "^32.0.0"
   }
 }
