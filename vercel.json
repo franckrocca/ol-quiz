@@ -1,14 +1,10 @@
 {
-  "version": 2,
   "functions": {
-    "api/*.js": {
+    "api/questions.js": {
+      "runtime": "nodejs18.x"
+    },
+    "api/calculate-score.js": {
       "runtime": "nodejs18.x"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    }
-  ]
+  }
 }
