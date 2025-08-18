@@ -1,17 +1,19 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/public/$1"
-    },
-    {
-      "source": "/",
-      "destination": "/public/index.html"
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     }
   ],
-  "functions": {
-    "api/calculate-score.js": {
-      "maxDuration": 10
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
     }
-  }
+  ]
 }
