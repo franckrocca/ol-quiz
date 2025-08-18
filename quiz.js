@@ -50,6 +50,22 @@ function showQuestion() {
     const container = document.getElementById('quiz-container');
     const question = questions[currentQuestion];
     
+    // Vérifier si c'est une question conditionnelle
+    if (question.conditional) {
+        const conditionKey = Object.keys(question.conditional)[0];
+        const conditionValue = question.conditional[conditionKey];
+        if (answers[conditionKey] !== conditionValue) {
+            // Passer cette question si la condition n'est pas remplie
+            currentQuestion++;
+            if (currentQuestion >= questions.length) {
+                showEmailScreen();
+            } else {
+                showQuestion();
+            }
+            return;
+        }
+    }
+    
     // Vérifier si c'est le moment d'afficher un WOW break
     const wowBreak = wowBreaks.find(w => w.position === currentQuestion + 1);
     if (wowBreak) {
@@ -102,9 +118,23 @@ function showQuestion() {
     if (question.type === 'multi-select' && multiSelectAnswers[question.key]) {
         multiSelectAnswers[question.key].forEach(value => {
             const option = document.querySelector(`[data-value="${value}"]`);
-            if (option) option.classList.add('selected');
+            if (option) {
+                option.classList.add('selected');
+                const checkbox = option.querySelector('.checkbox-icon');
+                if (checkbox) checkbox.textContent = '☑';
+            }
         });
         updateMultiSelectCount(question.key, question.maxChoices);
+    }
+    
+    // Ajouter les event listeners pour multi-select après la création du DOM
+    if (question.type === 'multi-select') {
+        setupMultiSelectListeners(question.key, question.maxChoices);
+    }
+    
+    // Calculer et afficher l'IMC si nécessaire
+    if (question.showIMC) {
+        setupIMCCalculation();
     }
 }
 
@@ -167,19 +197,22 @@ function createDoubleInput(question) {
 
 // Créer multi-select
 function createMultiSelect(question) {
+    const maxChoices = question.maxChoices || 999; // Par défaut illimité sauf si spécifié
     let html = `
         <div class="multi-select-info">
-            Sélectionné: <span class="multi-select-count" id="count-${question.key}">0</span> / ${question.maxChoices || 3}
+            Sélectionné: <span class="multi-select-count" id="count-${question.key}">0</span>${question.maxChoices ? ' / ' + question.maxChoices : ''}
         </div>
         <div class="options-grid">
     `;
     
-    question.options.forEach(option => {
+    question.options.forEach((option, index) => {
         html += `
-            <div class="option" 
-                 data-value="${option}" 
-                 onclick="toggleMultiSelect('${question.key}', '${option}', ${question.maxChoices || 3})">
-                ${option}
+            <div class="option multi-option" 
+                 data-value="${option}"
+                 data-key="${question.key}"
+                 id="option-${question.key}-${index}">
+                <span class="checkbox-icon">☐</span>
+                <span class="option-text">${option}</span>
             </div>
         `;
     });
@@ -345,30 +378,10 @@ function saveDoubleInputAndNext(key) {
     }
 }
 
-// Toggle multi-select
+// Cette fonction n'est plus utilisée car remplacée par setupMultiSelectListeners
+// Gardée pour compatibilité si appelée ailleurs
 function toggleMultiSelect(key, value, maxChoices) {
-    const option = event.target;
-    
-    if (!multiSelectAnswers[key]) {
-        multiSelectAnswers[key] = [];
-    }
-    
-    const index = multiSelectAnswers[key].indexOf(value);
-    
-    if (index > -1) {
-        multiSelectAnswers[key].splice(index, 1);
-        option.classList.remove('selected');
-    } else {
-        if (multiSelectAnswers[key].length < maxChoices) {
-            multiSelectAnswers[key].push(value);
-            option.classList.add('selected');
-        } else {
-            alert(`Maximum ${maxChoices} choix`);
-            return;
-        }
-    }
-    
-    updateMultiSelectCount(key, maxChoices);
+    console.log('toggleMultiSelect deprecated - use setupMultiSelectListeners');
 }
 
 // Mettre à jour le compteur multi-select
@@ -573,9 +586,167 @@ function updateProgress(complete = false) {
         const progress = ((currentQuestion + 1) / totalSteps) * 100;
         progressBar.style.width = progress + '%';
         
+        // Messages motivants au lieu du nombre de questions
         if (currentQuestion === 0) {
-            progressText.textContent = 'Prêt à commencer';
+            progressText.textContent = 'C\'est parti !';
+        } else if (currentQuestion < 5) {
+            progressText.textContent = 'Excellent début !';
         } else if (currentQuestion < 10) {
+            progressText.textContent = 'Tu progresses bien !';
+        } else if (currentQuestion < 15) {
+            progressText.textContent = 'Continue comme ça !';
+        } else if (currentQuestion < 20) {
+            progressText.textContent = 'Déjà la moitié !';
+        } else if (currentQuestion < 25) {
+            progressText.textContent = 'Tu y es presque !';
+        } else if (currentQuestion < 30) {
+            progressText.textContent = 'Plus que quelques questions...';
+        } else if (currentQuestion < 35) {
+            progressText.textContent = 'Dernière ligne droite !';
+        } else {
+            progressText.textContent = 'Presque terminé !';
+        }
+    }
+}
+
+// Setup multi-select listeners
+function setupMultiSelectListeners(key, maxChoices) {
+    const options = document.querySelectorAll(`[data-key="${key}"]`);
+    
+    options.forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const value = this.getAttribute('data-value');
+            
+            if (!multiSelectAnswers[key]) {
+                multiSelectAnswers[key] = [];
+            }
+            
+            const index = multiSelectAnswers[key].indexOf(value);
+            const checkbox = this.querySelector('.checkbox-icon');
+            
+            // Gérer "Aucune activité" spécialement
+            if (value === 'Aucune activité' || value === 'Aucun') {
+                if (index === -1) {
+                    // Désélectionner tout et sélectionner seulement "Aucun"
+                    multiSelectAnswers[key] = [value];
+                    options.forEach(opt => {
+                        opt.classList.remove('selected');
+                        const cb = opt.querySelector('.checkbox-icon');
+                        if (cb) cb.textContent = '☐';
+                    });
+                    this.classList.add('selected');
+                    checkbox.textContent = '☑';
+                } else {
+                    // Désélectionner
+                    multiSelectAnswers[key] = [];
+                    this.classList.remove('selected');
+                    checkbox.textContent = '☐';
+                }
+            } else {
+                // Désélectionner "Aucun" si on sélectionne autre chose
+                const aucunIndex = multiSelectAnswers[key].indexOf('Aucune activité');
+                const aucun2Index = multiSelectAnswers[key].indexOf('Aucun');
+                
+                if (aucunIndex > -1) {
+                    multiSelectAnswers[key].splice(aucunIndex, 1);
+                    const aucunOpt = document.querySelector('[data-value="Aucune activité"]');
+                    if (aucunOpt) {
+                        aucunOpt.classList.remove('selected');
+                        const cb = aucunOpt.querySelector('.checkbox-icon');
+                        if (cb) cb.textContent = '☐';
+                    }
+                }
+                
+                if (aucun2Index > -1) {
+                    multiSelectAnswers[key].splice(aucun2Index, 1);
+                    const aucunOpt = document.querySelector('[data-value="Aucun"]');
+                    if (aucunOpt) {
+                        aucunOpt.classList.remove('selected');
+                        const cb = aucunOpt.querySelector('.checkbox-icon');
+                        if (cb) cb.textContent = '☐';
+                    }
+                }
+                
+                if (index > -1) {
+                    // Désélectionner
+                    multiSelectAnswers[key].splice(index, 1);
+                    this.classList.remove('selected');
+                    checkbox.textContent = '☐';
+                } else {
+                    // Vérifier le maximum
+                    if (maxChoices && multiSelectAnswers[key].length >= maxChoices) {
+                        alert(`Maximum ${maxChoices} choix`);
+                        return;
+                    }
+                    // Sélectionner
+                    multiSelectAnswers[key].push(value);
+                    this.classList.add('selected');
+                    checkbox.textContent = '☑';
+                }
+            }
+            
+            updateMultiSelectCount(key, maxChoices);
+        });
+    });
+}
+
+// Setup calcul IMC automatique
+function setupIMCCalculation() {
+    const weightInput = document.getElementById('weight');
+    const heightInput = document.getElementById('height');
+    
+    if (weightInput && heightInput) {
+        const calculateIMC = () => {
+            const weight = parseFloat(weightInput.value);
+            const height = parseFloat(heightInput.value);
+            
+            if (weight && height) {
+                const imc = (weight / Math.pow(height / 100, 2)).toFixed(1);
+                
+                // Créer ou mettre à jour l'affichage de l'IMC
+                let imcDisplay = document.getElementById('imc-display');
+                if (!imcDisplay) {
+                    imcDisplay = document.createElement('div');
+                    imcDisplay.id = 'imc-display';
+                    imcDisplay.className = 'imc-display';
+                    weightInput.parentElement.parentElement.appendChild(imcDisplay);
+                }
+                
+                let imcColor = '#01FF00'; // Vert par défaut
+                let imcText = 'Poids normal ✓';
+                
+                if (imc < 18.5) {
+                    imcColor = '#FFA500';
+                    imcText = 'Insuffisance pondérale';
+                } else if (imc >= 25 && imc < 30) {
+                    imcColor = '#FFA500';
+                    imcText = 'Surpoids';
+                } else if (imc >= 30) {
+                    imcColor = '#FF4444';
+                    imcText = 'Obésité';
+                }
+                
+                imcDisplay.innerHTML = `
+                    <div style="background: var(--light-gray); padding: 15px; border-radius: 10px; margin-top: 20px;">
+                        <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Ton IMC :</div>
+                        <div style="font-size: 36px; font-weight: 900; color: ${imcColor};">${imc}</div>
+                        <div style="font-size: 16px; color: ${imcColor}; font-weight: 600;">${imcText}</div>
+                    </div>
+                `;
+                
+                answers.imc = imc;
+            }
+        };
+        
+        weightInput.addEventListener('input', calculateIMC);
+        heightInput.addEventListener('input', calculateIMC);
+        weightInput.addEventListener('blur', calculateIMC);
+        heightInput.addEventListener('blur', calculateIMC);
+    }
+}
             progressText.textContent = `Question ${currentQuestion} / ${questions.length}`;
         } else if (currentQuestion < 20) {
             progressText.textContent = 'Continue, tu progresses bien !';
