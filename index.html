@@ -143,5 +143,37 @@
 
     <!-- Scripts -->
     <script src="quiz.js"></script>
+    <script>
+    // Fix pour l'initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser le quiz si pas déjà fait
+        if (typeof ORALifeQuiz !== 'undefined' && !window.quiz) {
+            window.quiz = new ORALifeQuiz();
+            console.log('✅ Quiz initialisé');
+        }
+        
+        // Bouton de démarrage
+        const startBtn = document.getElementById('start-quiz-btn');
+        if (startBtn) {
+            startBtn.onclick = function() {
+                console.log('🚀 Démarrage du quiz');
+                document.getElementById('landing-screen').style.display = 'none';
+                document.getElementById('quiz-screen').style.display = 'block';
+                document.getElementById('quiz-screen').classList.add('active');
+                
+                // Mettre à jour la barre de progression
+                const progressBar = document.getElementById('progressBar');
+                if (progressBar) {
+                    progressBar.style.width = '2.6%'; // 1/38
+                }
+                
+                // Si quiz existe, utiliser ses méthodes
+                if (window.quiz && window.quiz.showScreen) {
+                    window.quiz.showScreen('quiz');
+                }
+            };
+        }
+    });
+    </script>
 </body>
 </html>
