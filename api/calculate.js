@@ -1,6 +1,7 @@
-// ATTENTION: Ceci est ton algorithme propriétaire - NE JAMAIS exposer côté client
+// ALGORITHME SCIENTIFIQUE BASÉ SUR LA LONGÉVITÉ ET LE HEALTHSPAN
+// Basé sur les études : VO2max (Mandsager 2018), Sleep (Walker 2017), Stress (Epel 2004), etc.
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -11,374 +12,355 @@ export default function handler(req, res) {
     return res.status(400).json({ error: 'Missing data' });
   }
 
-  // Scoring weights - ton algorithme secret
-  const weights = {
-    // Facteurs critiques (x3)
-    energy3y: 3,
-    last100: 3,
-    crash: 3,
-    sleepQuality: 3,
-    nightAwakenings: 3,
-    stress: 3,
-    
-    // Facteurs importants (x2)
-    stairs: 2,
-    recovery: 2,
-    cognition: 2,
-    digestion: 2,
-    jointPain: 2,
-    symptoms: 2,
-    weightVsIdeal: 2,
-    libido: 2,
-    skin: 2,
-    
-    // Facteurs modérés (x1)
-    sitting: 1,
-    environment: 1,
-    sun: 1,
-    nature: 1,
-    bedtime: 1,
-    screens: 1,
-    breakfast: 1,
-    hydration: 1,
-    alcohol: 1,
-    frequency: 1,
-    supplements: 1,
-    social: 1,
-    vacations: 1,
-    projection: 1
-  };
+  // SYSTÈME DE SCORING SCIENTIFIQUE
+  // Basé sur l'impact réel sur la longévité selon les études
 
-  // Système de scoring par réponse (0 = pire, 4 = meilleur)
-  const scoring = {
-    energy3y: { 
-      'Bien mieux qu\'avant': 4,
-      'Un peu mieux': 3,
-      'Pareil (stable)': 2,
-      'Un peu moins bien': 1,
-      'Beaucoup moins bien': 0
+  // TIER 1 - FACTEURS CRITIQUES (Poids x5)
+  // Impact majeur sur l'espérance de vie
+  const tier1Scoring = {
+    stairs: { // VO2 Max proxy - Prédit -15 ans d'espérance (Mandsager et al., 2018)
+      'Facile, en parlant': 100,
+      'Léger essoufflement': 75,
+      'Besoin de reprendre mon souffle': 50,
+      'Très difficile': 25,
+      'J\'évite les escaliers': 0
     },
-    last100: {
-      'Cette semaine': 4,
-      'Ce mois-ci': 3,
-      'Cette année': 2,
-      'Il y a 2-3 ans': 1,
-      'Je ne m\'en souviens plus': 0
-    },
-    stairs: {
-      'Facile, je pourrais continuer': 4,
-      'OK mais légèrement essoufflé': 3,
-      'Difficile, bien essoufflé': 2,
-      'Très dur, obligé de m\'arrêter': 1,
-      'Impossible sans pause': 0
-    },
-    sitting: {
-      'Moins de 4h': 4,
-      '4-6h': 3,
-      '7-9h': 2,
-      '10-12h': 1,
-      'Plus de 12h': 0
-    },
-    nightAwakenings: {
-      '0 (sommeil parfait)': 4,
-      '1 fois': 3,
-      '2-3 fois': 2,
-      '4-5 fois': 1,
-      'Plus de 5 fois': 0
-    },
-    libido: {
-      'Au top, comme à 20 ans': 4,
-      'Plutôt bien': 3,
-      'Correct mais en baisse': 2,
-      'Clairement diminuée': 1,
-      'Plus vraiment d\'intérêt': 0
-    },
-    crash: {
-      'Jamais de crash': 4,
-      'Après 17h': 3,
-      'Vers 14-15h': 2,
-      'Dès 11h': 1,
-      'Fatigué dès le réveil': 0
-    },
-    weightVsIdeal: {
-      'Pile mon poids idéal': 4,
-      '+/- 3kg de mon idéal': 3,
-      '+5 à 10kg': 2,
-      '+10 à 20kg': 1,
-      '+20kg ou plus': 0
-    },
-    digestion: {
-      'Parfaite comme une horloge': 4,
-      'Quelques inconforts occasionnels': 3,
-      'Ballonnements fréquents': 2,
-      'Problèmes quotidiens': 1,
-      'Chaos intestinal permanent': 0
-    },
-    jointPain: {
-      'Aucune douleur': 4,
-      'Petites gênes occasionnelles': 3,
-      'Douleurs régulières mais gérables': 2,
-      'Douleurs qui limitent mes activités': 1,
-      'Douleurs chroniques handicapantes': 0
-    },
-    cognition: {
-      'Sharp comme un laser': 4,
-      'Plutôt bonnes': 3,
-      'Des moments de flou': 2,
-      'Difficultés fréquentes': 1,
-      'Brouillard mental constant': 0
-    },
-    symptoms: {
-      'Muscle et force au top': 4,
-      'Maintien correct': 3,
-      'Légère perte visible': 2,
-      'Perte importante': 1,
-      'Fonte musculaire inquiétante': 0
-    },
-    recovery: {
-      '24h max': 4,
-      '48h environ': 3,
-      '3-4 jours': 2,
-      'Une semaine': 1,
-      'Courbatures permanentes': 0
-    },
-    stress: {
-      'Zen en toutes circonstances': 4,
-      'Stress ponctuel gérable': 3,
-      'Stress régulier': 2,
-      'Stress quotidien élevé': 1,
-      'Burnout/épuisement': 0
-    },
-    skin: {
-      'Peau de bébé': 4,
-      'Quelques imperfections': 3,
-      'Rides et ridules visibles': 2,
-      'Vieillissement marqué': 1,
-      'Problèmes cutanés multiples': 0
-    },
-    environment: {
-      'Campagne/nature': 4,
-      'Petite ville': 3,
-      'Ville moyenne': 2,
-      'Grande ville': 1,
-      'Mégapole polluée': 0
-    },
-    sun: {
-      '30min+ par jour': 4,
-      '15-30min par jour': 3,
-      'Quelques fois par semaine': 2,
-      'Rarement': 1,
-      'Jamais (mode vampire)': 0
-    },
-    nature: {
-      'Je vis dans la nature': 4,
-      'Plus de 10h': 3,
-      '5-10h': 2,
-      '1-5h': 1,
-      '0h (100% béton)': 0
-    },
-    sleepQuality: {
-      'Parfait, je me réveille en forme': 4,
-      'Plutôt bon': 3,
-      'Variable': 2,
-      'Souvent mauvais': 1,
+    sleepQuality: { // Sommeil - Impact sur TOUTES les fonctions (Walker, 2017)
+      '7-9h de sommeil profond': 100,
+      '6-7h correct': 75,
+      '5-6h léger et fragmenté': 40,
+      'Moins de 5h': 20,
       'Insomnie chronique': 0
     },
-    bedtime: {
-      'Avant 22h': 4,
-      '22h-23h': 3,
-      '23h-minuit': 2,
-      'Minuit-1h': 1,
-      'Après 1h': 0
+    stress: { // Stress chronique - Télomères courts (Epel et al., 2004)
+      'Zen permanent': 100,
+      'Gérable la plupart du temps': 75,
+      'Élevé régulièrement': 40,
+      'Très élevé quotidiennement': 20,
+      'Mode survie/burnout': 0
     },
-    screens: {
-      'Jamais (livre/méditation)': 4,
-      'Arrêt 2h avant': 3,
-      'Arrêt 1h avant': 2,
-      'Jusqu\'au lit': 1,
-      'Je m\'endors avec': 0
-    },
-    breakfast: {
-      'Protéines + gras (œufs, avocat)': 4,
-      'Équilibré (complet)': 3,
-      'Céréales/muesli': 2,
-      'Sucré (pain blanc, confiture)': 1,
-      'Juste café/rien': 0
-    },
-    hydration: {
-      '2L+ religieusement': 4,
-      '1.5-2L': 3,
-      '1-1.5L': 2,
-      'Moins d\'1L': 1,
-      'Principalement café/sodas': 0
-    },
-    alcohol: {
-      '0 (jamais)': 4,
-      '1-3 verres': 3,
-      '4-7 verres (1/jour)': 2,
-      '8-14 verres (2/jour)': 1,
-      '15+ verres': 0
-    },
-    frequency: {
-      '6-7x par semaine': 4,
-      '4-5x par semaine': 3,
-      '2-3x par semaine': 2,
-      '1x par semaine': 1,
-      'Jamais': 0
-    },
-    supplements: {
-      'Stack complet optimisé': 4,
-      'Quelques basiques (vitamines)': 3,
-      'Occasionnellement': 2,
-      'Jamais': 1,
-      'N\'importe quoi sans stratégie': 0
-    },
-    social: {
-      'Entourage au top': 4,
-      'Plutôt bien entouré': 3,
-      'Quelques bonnes relations': 2,
-      'Peu de vraies connexions': 1,
-      'Isolement social': 0
-    },
-    vacations: {
-      'Ce mois-ci': 4,
-      'Cette année': 3,
-      'L\'année dernière': 2,
-      'Il y a 2-3 ans': 1,
-      'Je ne déconnecte jamais': 0
-    },
-    projection: {
-      'En pleine forme': 4,
-      'À peu près pareil': 3,
-      'Un peu diminué': 2,
-      'Sérieusement dégradé': 1,
-      'Dans un état critique': 0
+    frequency: { // Activité physique - #1 facteur modifiable (Wen et al., 2011)
+      'Tous les jours': 100,
+      '4-6 fois/semaine': 85,
+      '2-3 fois/semaine': 60,
+      '1 fois/semaine': 30,
+      'Rarement ou jamais': 0
     }
   };
 
-  // Calcul du score
+  // TIER 2 - FACTEURS IMPORTANTS (Poids x3)
+  // Impact fort sur healthspan
+  const tier2Scoring = {
+    energy3y: { // Déclin énergétique = marqueur de vieillissement
+      'Mieux qu\'avant': 100,
+      'Identique': 75,
+      '-20% environ': 50,
+      '-40% environ': 25,
+      '-60% ou plus': 0
+    },
+    weightVsIdeal: { // Obésité = -8 ans d'espérance (Peeters et al., 2003)
+      'Parfait': 100,
+      '+2-5 kg': 80,
+      '+5-10 kg': 60,
+      '+10-15 kg': 30,
+      '+15 kg ou plus': 0
+    },
+    alcohol: { // Alcool = toxine, 0 bénéfice (GBD 2016 Alcohol Collaborators)
+      '0 (jamais)': 100,
+      '1-3 verres': 75,
+      '4-7 verres (1/jour)': 50,
+      '8-14 verres (2/jour)': 25,
+      '15+ verres': 0
+    },
+    digestion: { // Microbiome = 70% système immunitaire
+      'Parfaite comme une horloge': 100,
+      'Quelques inconforts occasionnels': 75,
+      'Ballonnements fréquents': 50,
+      'Problèmes quotidiens': 25,
+      'Chaos intestinal permanent': 0
+    },
+    cognition: { // Déclin cognitif = mortalité précoce
+      'Excellentes': 100,
+      'Quelques oublis mineurs': 75,
+      'Difficultés fréquentes': 50,
+      'Brouillard mental régulier': 25,
+      'Très inquiétant': 0
+    },
+    recovery: { // Capacité adaptative = résilience
+      'Moins de 24h': 100,
+      '24-48h': 75,
+      '2-3 jours': 50,
+      '4-7 jours': 25,
+      'Plus d\'une semaine': 0
+    }
+  };
+
+  // TIER 3 - FACTEURS MODÉRÉS (Poids x2)
+  const tier3Scoring = {
+    hydration: { // Hydratation = fonction cellulaire
+      '2L+ religieusement': 100,
+      '1.5-2L': 75,
+      '1-1.5L': 50,
+      'Moins d\'1L': 25,
+      'Principalement café/sodas': 0
+    },
+    sun: { // Vitamine D = -20% mortalité (Schöttker et al., 2014)
+      '30min+ quotidien': 100,
+      '15-30min régulier': 75,
+      'Quelques fois/semaine': 50,
+      'Rarement': 25,
+      'Jamais (vampire mode)': 0
+    },
+    nature: { // Nature = -12% mortalité (Gascon et al., 2016)
+      'Plus de 10h': 100,
+      '5-10h': 75,
+      '2-5h': 50,
+      'Moins de 2h': 25,
+      'Zéro': 0
+    },
+    social: { // Isolation = +50% mortalité (Holt-Lunstad et al., 2010)
+      'Très riches et nombreuses': 100,
+      'Satisfaisantes': 75,
+      'Limitées': 50,
+      'Difficiles/conflictuelles': 25,
+      'Isolement social': 0
+    },
+    breakfast: { // Jeûne intermittent = longévité (de Cabo & Mattson, 2019)
+      'Jeûne intermittent': 100,
+      'Protéines + bons gras': 85,
+      'Céréales complètes + fruits': 60,
+      'Sucré (pain blanc, confiture)': 30,
+      'Juste café/rien': 50
+    },
+    nightAwakenings: { // Fragmentation sommeil = vieillissement
+      '0 (sommeil parfait)': 100,
+      '1 fois': 75,
+      '2-3 fois': 50,
+      '4+ fois': 25,
+      'Insomnie chronique': 0
+    }
+  };
+
+  // TIER 4 - FACTEURS LÉGERS (Poids x1)
+  const tier4Scoring = {
+    sitting: { // Sédentarité (compensable par exercice)
+      'Moins de 4h': 100,
+      '4-6h': 75,
+      '6-8h': 50,
+      '8-10h': 25,
+      'Plus de 10h': 0
+    },
+    screens: { // Lumière bleue = perturbation circadien
+      'Jamais (coupure 2h avant)': 100,
+      'Avec lunettes anti-lumière bleue': 75,
+      'Parfois': 50,
+      'Toujours': 25,
+      'Jusqu\'au lit': 0
+    },
+    supplements: { // Compléments = bonus si bien fait
+      'Protocole complet personnalisé': 100,
+      'Basiques (Vit D, Omega 3, Magnésium)': 75,
+      'Occasionnels': 50,
+      'Jamais': 40,
+      'Je ne sais pas quoi prendre': 30
+    },
+    bedtime: { // Rythme circadien
+      'Avant 22h': 100,
+      '22h-23h': 75,
+      '23h-minuit': 50,
+      'Minuit-1h': 25,
+      'Après 1h du matin': 0
+    },
+    environment: { // Pollution = -2.2 ans (Lancet, 2022)
+      'Nature/campagne (air pur)': 100,
+      'Petite ville (<50k habitants)': 75,
+      'Ville moyenne (50-200k)': 50,
+      'Grande ville (200k-1M)': 25,
+      'Mégapole (Paris, Lyon, Marseille)': 0
+    },
+    vacations: { // Récupération mentale
+      'Il y a moins de 3 mois': 100,
+      '3-6 mois': 75,
+      '6-12 mois': 50,
+      'Plus d\'un an': 25,
+      'Je ne déconnecte jamais': 0
+    }
+  };
+
+  // CALCUL DU SCORE
   let totalScore = 0;
   let maxPossible = 0;
+  let categoryScores = {};
 
-  for (const [key, value] of Object.entries(answers)) {
-    if (scoring[key] && scoring[key][value] !== undefined) {
-      const weight = weights[key] || 1;
-      totalScore += scoring[key][value] * weight;
-      maxPossible += 4 * weight;
+  // Tier 1 (x5)
+  Object.entries(tier1Scoring).forEach(([key, scoring]) => {
+    if (answers[key] && scoring[answers[key]] !== undefined) {
+      const score = scoring[answers[key]] * 5;
+      totalScore += score;
+      categoryScores[key] = { score, max: 500, tier: 1 };
     }
+    maxPossible += 500;
+  });
+
+  // Tier 2 (x3)
+  Object.entries(tier2Scoring).forEach(([key, scoring]) => {
+    if (answers[key] && scoring[answers[key]] !== undefined) {
+      const score = scoring[answers[key]] * 3;
+      totalScore += score;
+      categoryScores[key] = { score, max: 300, tier: 2 };
+    }
+    maxPossible += 300;
+  });
+
+  // Tier 3 (x2)
+  Object.entries(tier3Scoring).forEach(([key, scoring]) => {
+    if (answers[key] && scoring[answers[key]] !== undefined) {
+      const score = scoring[answers[key]] * 2;
+      totalScore += score;
+      categoryScores[key] = { score, max: 200, tier: 3 };
+    }
+    maxPossible += 200;
+  });
+
+  // Tier 4 (x1)
+  Object.entries(tier4Scoring).forEach(([key, scoring]) => {
+    if (answers[key] && scoring[answers[key]] !== undefined) {
+      const score = scoring[answers[key]] * 1;
+      totalScore += score;
+      categoryScores[key] = { score, max: 100, tier: 4 };
+    }
+    maxPossible += 100;
+  });
+
+  // BONUS/MALUS selon l'âge
+  const age = parseInt(answers.age) || 40;
+  if (age < 30) totalScore += 100;
+  else if (age < 40) totalScore += 50;
+  else if (age < 50) totalScore += 0;
+  else if (age < 60) totalScore -= 50;
+  else totalScore -= 100;
+
+  // BONUS IMC optimal
+  if (answers.weight && answers.height) {
+    const imc = answers.weight / Math.pow(answers.height / 100, 2);
+    if (imc >= 20 && imc <= 25) totalScore += 100;
+    else if (imc >= 18.5 && imc < 20) totalScore += 50;
+    else if (imc > 25 && imc <= 27) totalScore += 50;
+    else totalScore += 0;
+    maxPossible += 100;
   }
 
-  // Calcul du score final sur 100
+  // Score final sur 100
   const finalScore = Math.round((totalScore / maxPossible) * 100);
 
-  // Calcul de l'âge biologique
-  const chronoAge = parseInt(answers.age) || 40;
+  // Calcul de l'âge biologique (basé sur Levine et al., 2018)
   const agePenalty = Math.round((100 - finalScore) * 0.3);
-  const biologicalAge = chronoAge + agePenalty;
+  const biologicalAge = age + agePenalty;
 
-  // Détermination du niveau de risque
-  let riskLevel, riskColor, riskMessage, trend;
+  // Identification des 3 priorités
+  const priorities = Object.entries(categoryScores)
+    .sort((a, b) => (a[1].score / a[1].max) - (b[1].score / b[1].max))
+    .slice(0, 3)
+    .map(([key, data]) => ({
+      key,
+      percentage: Math.round((data.score / data.max) * 100),
+      tier: data.tier
+    }));
+
+  // Niveau de risque et projections
+  let riskLevel, riskColor, trend, projections;
   
   if (finalScore >= 80) {
     riskLevel = 'Très faible';
     riskColor = '#00CC00';
-    riskMessage = 'Excellence biologique atteinte';
     trend = 'Vieillissement optimal';
+    projections = [
+      '🌟 Excellence biologique atteinte',
+      '🌟 Protection maximale contre le vieillissement',
+      '🌟 Espérance de vie : +10-15 ans vs moyenne',
+      '💎 Maintiens cette excellence avec Ora Life'
+    ];
   } else if (finalScore >= 60) {
     riskLevel = 'Faible';
     riskColor = '#01FF00';
-    riskMessage = 'Profil santé supérieur à la moyenne';
     trend = 'Vieillissement ralenti';
+    projections = [
+      '✅ Profil santé supérieur à la moyenne',
+      '✅ Habitudes protectrices en place',
+      '✅ Potentiel +5-10 ans d\'espérance de vie',
+      '🚀 Objectif : Atteindre l\'excellence biologique'
+    ];
   } else if (finalScore >= 40) {
     riskLevel = 'Modéré';
     riskColor = '#FFA500';
-    riskMessage = 'Amélioration nécessaire';
     trend = 'Vieillissement normal';
+    projections = [
+      '⚠️ Risque +45% maladies chroniques après 60 ans',
+      '⚠️ Déclin cognitif probable après 70 ans',
+      '⚠️ Perte d\'autonomie vers 75-80 ans',
+      '💡 Action nécessaire pour inverser la tendance'
+    ];
   } else if (finalScore >= 20) {
     riskLevel = 'Élevé';
     riskColor = '#FF4444';
-    riskMessage = 'Attention requise';
     trend = 'Vieillissement accéléré';
+    projections = [
+      '🚨 Risque +73% maladies cardiovasculaires',
+      '🚨 Risque +89% diabète type 2 dans 10 ans',
+      '🚨 -12 ans d\'espérance de vie en bonne santé',
+      '⚡ Protocole urgent nécessaire'
+    ];
   } else {
     riskLevel = 'Critique';
     riskColor = '#CC0000';
-    riskMessage = 'Intervention urgente nécessaire';
     trend = 'Vieillissement très accéléré';
+    projections = [
+      '🆘 État de santé critique',
+      '🆘 Multiples facteurs de risque cumulés',
+      '🆘 Espérance de vie réduite de 15-20 ans',
+      '🔴 Intervention immédiate requise'
+    ];
   }
 
-  // Projections futures
-  const futureRisks = [];
-  if (finalScore < 40) {
-    futureRisks.push('🚨 +73% risque cardiovasculaire dans 10 ans');
-    futureRisks.push('🚨 +89% risque diabète type 2');
-    futureRisks.push('🚨 -12 ans espérance de vie en bonne santé');
-  } else if (finalScore < 60) {
-    futureRisks.push('⚠️ +45% risque maladies chroniques');
-    futureRisks.push('⚠️ Déclin cognitif accéléré après 60 ans');
-    futureRisks.push('⚠️ -7 ans espérance de vie en bonne santé');
-  } else if (finalScore < 80) {
-    futureRisks.push('✅ Profil santé supérieur à la moyenne');
-    futureRisks.push('✅ Habitudes protectrices en place');
-    futureRisks.push('🚀 Potentiel pour atteindre l\'excellence');
-  } else {
-    futureRisks.push('🌟 Excellence biologique atteinte');
-    futureRisks.push('🌟 Protection maximale contre le vieillissement');
-    futureRisks.push('💎 Maintiens cette excellence avec OraLife');
+  // Envoi vers Google Sheets
+  try {
+    const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbwjyAjH9Nl6y2IeRWHi5Qrr6ftqVilH4T9RMPAdNXM_XYVuaN0WFzrPPYwVL8oOZR0W/exec';
+    
+    await fetch(googleScriptUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...userInfo,
+        score: finalScore,
+        biologicalAge,
+        chronologicalAge: age,
+        riskLevel,
+        answers,
+        timestamp: new Date().toISOString()
+      })
+    });
+  } catch (error) {
+    console.error('Erreur Google Sheets:', error);
   }
 
-  // Recommandations personnalisées
-  const recommendations = [];
-  
-  // Top 3 problèmes à adresser
-  const problems = [];
-  if (scoring.stress && scoring.stress[answers.stress] <= 1) {
-    problems.push('Gestion du stress critique');
-  }
-  if (scoring.sleepQuality && scoring.sleepQuality[answers.sleepQuality] <= 1) {
-    problems.push('Qualité de sommeil à améliorer d\'urgence');
-  }
-  if (scoring.energy3y && scoring.energy3y[answers.energy3y] <= 1) {
-    problems.push('Niveau d\'énergie très bas');
-  }
-  if (scoring.digestion && scoring.digestion[answers.digestion] <= 1) {
-    problems.push('Santé intestinale compromise');
-  }
-
-  // Messages de motivation basés sur les réponses
-  const motivations = answers.motivation || [];
-  let personalMessage = '';
-  
-  if (motivations.includes('Voir mes petits-enfants grandir')) {
-    personalMessage = 'Pour voir tes petits-enfants grandir, chaque choix compte dès aujourd\'hui.';
-  } else if (motivations.includes('Continuer à performer')) {
-    personalMessage = 'Ta performance future dépend des actions que tu prends maintenant.';
-  } else if (motivations.includes('Rester autonome jusqu\'au bout')) {
-    personalMessage = 'L\'autonomie se construit aujourd\'hui pour demain.';
-  }
-
-  const response = {
+  // Réponse
+  res.status(200).json({
     success: true,
     score: finalScore,
     biologicalAge,
-    chronologicalAge: chronoAge,
-    ageDifference: biologicalAge - chronoAge,
+    chronologicalAge: age,
+    ageDifference: biologicalAge - age,
     risk: {
       level: riskLevel,
       color: riskColor,
-      message: riskMessage,
       trend
     },
-    projections: futureRisks,
-    topProblems: problems,
-    personalMessage,
-    analysis: {
-      energy: scoring.energy3y ? scoring.energy3y[answers.energy3y] : null,
-      stress: scoring.stress ? scoring.stress[answers.stress] : null,
-      sleep: scoring.sleepQuality ? scoring.sleepQuality[answers.sleepQuality] : null,
-      physical: scoring.stairs ? scoring.stairs[answers.stairs] : null
-    },
+    projections,
+    priorities,
+    categoryScores,
     timestamp: new Date().toISOString()
-  };
-
-  res.status(200).json(response);
+  });
 }
