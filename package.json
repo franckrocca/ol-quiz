@@ -1,34 +1,12 @@
 {
   "name": "ol-quiz",
   "version": "1.0.0",
-  "description": "ORA Life Quiz - Évaluation scientifique de l'âge biologique",
+  "description": "ORA Life Quiz",
   "main": "index.js",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'No build required'",
-    "deploy": "vercel --prod",
-    "test": "node -e \"console.log('Tests passed')\""
+    "start": "echo 'No start script needed'"
   },
   "dependencies": {
     "@vercel/node": "^3.0.0"
-  },
-  "devDependencies": {
-    "vercel": "^32.5.6"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/franckrocca/ol-quiz.git"
-  },
-  "keywords": [
-    "biohacking",
-    "healthspan",
-    "longevity",
-    "quiz",
-    "health"
-  ],
-  "author": "Franck Rocca",
-  "license": "MIT"
+  }
 }
