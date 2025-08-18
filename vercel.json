@@ -1,3 +1,9 @@
 {
-  "version": 2
+  "version": 2,
+  "rewrites": [
+    { "source": "/", "destination": "/public/index.html" },
+    { "source": "/styles.css", "destination": "/public/styles.css" },
+    { "source": "/quiz.js", "destination": "/public/quiz.js" },
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ]
 }
