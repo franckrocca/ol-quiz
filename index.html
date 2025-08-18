@@ -23,20 +23,20 @@
     <div class="quiz-wrapper">
         <!-- Header -->
         <header class="quiz-header">
-    <div class="header-content">
-        <div class="logo-text">ORA LIFE</div>
-        <div class="progress-info">
-            <span id="progress-text">Prêt à commencer</span>
-        </div>
-    </div>
-    <div class="progress-bar-container">
-        <div class="progress-bar" id="progressBar"></div>
-    </div>
-</header>
+            <div class="header-content">
+                <div class="logo-text">ORA LIFE</div>
+                <div class="progress-info">
+                    <span id="header-progress-text">Prêt à commencer</span>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </header>
 
-        <!-- Main Container -->
-        <main class="quiz-container" id="quiz-container">
-            <!-- Landing Screen (comme tu l'as actuellement) -->
+        <!-- Main Container - IMPORTANT: garde cet ID -->
+        <main class="container" id="quiz-container">
+            <!-- Landing Screen -->
             <div id="landing-screen" class="screen active">
                 <div class="content-wrapper">
                     <h1 class="main-title">
@@ -67,7 +67,7 @@
                         </div>
                     </div>
 
-                    <button id="start-quiz" class="btn-primary btn-large">
+                    <button id="start-quiz-btn" class="btn-primary btn-large" onclick="quiz.startQuiz()">
                         Commencer l'Évaluation Gratuite
                         <span class="arrow">→</span>
                     </button>
@@ -85,33 +85,35 @@
 
             <!-- Quiz Screen -->
             <div id="quiz-screen" class="screen">
-                <!-- Progress Bar -->
-                <div class="progress-container">
-                    <div class="progress-bar">
-                        <div id="progress-fill" class="progress-fill"></div>
+                <div class="card">
+                    <!-- Progress Bar -->
+                    <div class="progress-container">
+                        <div class="progress-bar-quiz">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                        <span id="progress-text" class="progress-text">Question 1 sur 38</span>
                     </div>
-                    <span id="progress-text" class="progress-text">Question 1 sur 38</span>
-                </div>
 
-                <!-- Question Container -->
-                <div id="question-container" class="question-container">
-                    <!-- Questions seront injectées ici par JavaScript -->
-                </div>
+                    <!-- Question Container -->
+                    <div id="question-container" class="question-container">
+                        <!-- Questions seront injectées ici par JavaScript -->
+                    </div>
 
-                <!-- Navigation -->
-                <div class="navigation">
-                    <button id="prev-btn" class="btn-secondary" style="display: none;">
-                        ← Retour
-                    </button>
-                    <button id="next-btn" class="btn-primary" disabled>
-                        Suivant →
-                    </button>
+                    <!-- Navigation -->
+                    <div class="navigation">
+                        <button id="prev-btn" class="btn-secondary" onclick="quiz.previousQuestion()">
+                            ← Retour
+                        </button>
+                        <button id="next-btn" class="btn-primary" onclick="quiz.nextQuestion()">
+                            Suivant →
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- WOW Break Screen -->
             <div id="wow-screen" class="screen">
-                <div class="wow-content">
+                <div class="wow-content" id="wow-content">
                     <!-- WOW breaks seront injectés ici -->
                 </div>
             </div>
@@ -143,4 +145,3 @@
     <script src="quiz.js"></script>
 </body>
 </html>
-
