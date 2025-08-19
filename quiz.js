@@ -83,11 +83,10 @@ function showQuestion() {
         return;
     }
     
-    let question = questions[currentQuestion];
+    const question = questions[currentQuestion];
     
-    // LOGIQUE SPÉCIALE : Skip question hormones pour les hommes
+    // CORRECTION: Skip question hormones pour les hommes
     if (question.key === 'hormones' && answers.gender === 'Homme') {
-        // Passer directement à la question suivante
         currentQuestion++;
         showQuestion();
         return;
@@ -98,7 +97,7 @@ function showQuestion() {
     
     updateProgress();
     
-    // Support clavier Enter pour validation
+    // Support clavier Enter
     setupKeyboardSupport(question);
 }
 
@@ -232,7 +231,7 @@ function renderQuestion(question) {
     `;
 }
 
-// Calculer IMC automatiquement (STYLE COMME INDEX9)
+// CORRECTION 1: Calculer IMC avec fond gris
 function calculateIMC() {
     const weightInput = document.getElementById('double-input-1');
     const heightInput = document.getElementById('double-input-2');
@@ -267,14 +266,13 @@ function calculateIMC() {
             imcPosition = 75 + Math.min((imc - 30) / 10 * 25, 25);
         }
         
-        // Style exactement comme index9
         imcDisplay.innerHTML = `
-            <div class="imc-card">
+            <div class="imc-container">
                 <div class="imc-header">
                     <span>Ton IMC :</span>
                     <span class="imc-value">${imc}</span>
                 </div>
-                <div class="imc-bar-container">
+                <div class="imc-bar-wrapper">
                     <div class="imc-bar"></div>
                     <div class="imc-indicator" style="left: ${imcPosition}%;"></div>
                 </div>
@@ -288,25 +286,21 @@ function calculateIMC() {
     }
 }
 
-// Sélectionner une réponse (FIX pour première option)
+// CORRECTION 2 & 3: Fix première option qui ne fonctionne pas
 function selectAnswer(value) {
     const question = questions[currentQuestion];
-    
-    // FIX : Utiliser data-index pour identifier la première option
-    const optionCards = document.querySelectorAll('.option-card');
-    const clickedCard = event ? event.target : optionCards[0];
     
     // Stocker la réponse
     answers[question.key] = value;
     
     // Mettre à jour l'UI
+    const optionCards = document.querySelectorAll('.option-card');
     optionCards.forEach(card => {
         card.classList.remove('selected');
+        if (card.getAttribute('data-value') === value) {
+            card.classList.add('selected');
+        }
     });
-    
-    if (clickedCard) {
-        clickedCard.classList.add('selected');
-    }
     
     // Passer à la question suivante
     setTimeout(() => {
@@ -314,20 +308,19 @@ function selectAnswer(value) {
     }, 300);
 }
 
-// Toggle multi-select (FIX pour première option)
+// Toggle multi-select - CORRECTION pour première option
 function toggleMultiSelect(key, value) {
     if (!multiSelectAnswers[key]) {
         multiSelectAnswers[key] = [];
     }
     
-    const clickedCard = event.target;
+    const clickedCard = event.currentTarget || event.target;
     const index = multiSelectAnswers[key].indexOf(value);
     
     if (index > -1) {
         multiSelectAnswers[key].splice(index, 1);
         clickedCard.classList.remove('selected');
     } else {
-        // Limite selon la question
         const maxSelections = key === 'objectives' ? 3 : 10;
         if (multiSelectAnswers[key].length < maxSelections) {
             multiSelectAnswers[key].push(value);
@@ -366,7 +359,6 @@ function saveDoubleInputAndNext() {
     if (question.key === 'weight_height') {
         answers.weight = parseFloat(input1.value);
         answers.height = parseFloat(input2.value);
-        // L'IMC est déjà calculé et stocké par calculateIMC()
     } else {
         answers[`${question.key}_1`] = input1.value;
         answers[`${question.key}_2`] = input2.value;
@@ -400,41 +392,40 @@ function previousQuestion() {
     if (currentQuestion > 0) {
         currentQuestion--;
         // Si on retourne avant la question hormones et qu'on est un homme
-        if (questions[currentQuestion].key === 'hormones' && answers.gender === 'Homme') {
+        const prevQuestion = questions[currentQuestion];
+        if (prevQuestion && prevQuestion.key === 'hormones' && answers.gender === 'Homme') {
             currentQuestion--;
         }
         showQuestion();
     }
 }
 
-// Afficher WOW break (PLUS COMPACT)
+// CORRECTION 4 & 5: WOW breaks plus compacts
 function showWowBreak(wowBreak) {
     const container = document.getElementById('quiz-container');
     
-    // Classe spéciale pour le WOW destiny
     const isDestinyWow = wowBreak.title && wowBreak.title.includes('CONTRÔLES');
-    const wowClass = isDestinyWow ? 'wow-card destiny-wow' : 'wow-card';
+    const wowClass = isDestinyWow ? 'wow-card wow-destiny' : 'wow-card';
     
-    // Contenu spécial pour "Ta chaise te tue"
     let specialContent = '';
     if (wowBreak.title === 'TA CHAISE TE TUE') {
         specialContent = `
             <div class="chair-stats">
-                <div class="stat-row">
-                    <span>4h assis</span>
-                    <span class="stat-ok">✓ Risque minimal</span>
+                <div class="stat-item">
+                    <span class="stat-label">4h assis</span>
+                    <span class="stat-value ok">✓ Risque minimal</span>
                 </div>
-                <div class="stat-row">
-                    <span>7h assis</span>
-                    <span class="stat-warning">+5% mortalité</span>
+                <div class="stat-item">
+                    <span class="stat-label">7h assis</span>
+                    <span class="stat-value warning">+5% mortalité</span>
                 </div>
-                <div class="stat-row warning">
-                    <span>10h assis (avec sport)</span>
-                    <span class="stat-danger">+34% mortalité</span>
+                <div class="stat-item warning-bg">
+                    <span class="stat-label">10h assis</span>
+                    <span class="stat-value danger">+34% (avec sport)</span>
                 </div>
-                <div class="stat-row danger">
-                    <span>10h assis (sans sport)</span>
-                    <span class="stat-danger">+52% mortalité</span>
+                <div class="stat-item danger-bg">
+                    <span class="stat-label">10h assis</span>
+                    <span class="stat-value danger">+52% (sans sport)</span>
                 </div>
             </div>
             <div class="solution-teaser">
@@ -443,17 +434,16 @@ function showWowBreak(wowBreak) {
         `;
     }
     
-    // Contenu spécial pour "Tu contrôles ton destin"
     if (isDestinyWow) {
         specialContent = `
             <div class="genetics-visual">
-                <div class="genetics-stat">
+                <div class="genetics-item">
                     <span class="percentage small">7%</span>
-                    <span>Génétique</span>
+                    <span class="label">Génétique</span>
                 </div>
-                <div class="genetics-stat">
+                <div class="genetics-item">
                     <span class="percentage large">93%</span>
-                    <span>Tes choix</span>
+                    <span class="label">Tes choix</span>
                 </div>
             </div>
         `;
@@ -498,7 +488,6 @@ function updateProgress(complete = false) {
         const progress = ((currentQuestion + 1) / totalSteps) * 100;
         progressBar.style.width = progress + '%';
         
-        // Messages motivants variés
         const messages = [
             'C\'est parti !',
             'Excellent début !',
@@ -529,42 +518,19 @@ function showEmailScreen() {
         emailScreen.classList.add('active');
         emailScreen.style.display = 'block';
     }
-    
-    // Gérer la validation du formulaire
-    const form = document.getElementById('emailForm');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const consent = document.getElementById('consent');
-            const errorDiv = document.getElementById('consent-error');
-            
-            if (!consent.checked) {
-                e.preventDefault();
-                if (errorDiv) {
-                    errorDiv.style.display = 'block';
-                    errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats'; // FRANÇAIS
-                }
-                return false;
-            }
-            
-            if (errorDiv) {
-                errorDiv.style.display = 'none';
-            }
-        });
-    }
 }
 
-// Soumettre email
+// CORRECTION 6: Message checkbox en français
 async function submitEmail(event) {
     event.preventDefault();
     
-    // Vérifier la checkbox
     const consent = document.getElementById('consent');
     const errorDiv = document.getElementById('consent-error');
     
     if (!consent.checked) {
         if (errorDiv) {
             errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats'; // FRANÇAIS
+            errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats';
         }
         return false;
     }
@@ -602,7 +568,7 @@ async function submitEmail(event) {
         }
     }, 1000);
     
-    // Calculer le score
+    // Calculer le score avec l'algo scientifique
     try {
         const response = await fetch(`${API_BASE}/calculate`, {
             method: 'POST',
@@ -627,38 +593,38 @@ async function submitEmail(event) {
         console.error('Erreur lors du calcul:', error);
         clearInterval(messageInterval);
         
-        // Résultat par défaut avec bon calcul
-        const defaultResult = calculateDefaultScore();
+        // Calcul local si API fail
+        const defaultResult = calculateLocalScore();
         showResults(defaultResult);
     }
 }
 
-// Calculer le score par défaut (si API fail)
-function calculateDefaultScore() {
-    // Utiliser la même logique que api/calculate.js
-    let score = 50; // Base
+// Calcul local du score (fallback)
+function calculateLocalScore() {
+    const age = parseInt(answers.age) || 40;
+    let score = 50;
     
-    // Ajustements selon les réponses critiques
+    // Points bonus selon réponses critiques
     if (answers.sleep_quality === 'Excellent (7-9h, profond)') score += 10;
     if (answers.exercise_frequency === '5-7 fois/semaine') score += 10;
     if (answers.nutrition_quality === 'Optimale (bio, variée, équilibrée)') score += 10;
     if (answers.stress_level === 'Très faible (zen)') score += 10;
     if (answers.alcohol_consumption === 'Jamais') score += 5;
     
-    // IMC optimal
+    // Bonus IMC optimal
     if (answers.imc && answers.imc >= 20 && answers.imc <= 25) score += 10;
     
-    // Age penalty
-    const age = parseInt(answers.age) || 40;
-    if (age > 50) score -= 10;
+    // Pénalité âge
+    if (age > 50) score -= 5;
     if (age > 60) score -= 10;
     
-    // S'assurer que le score est entre 0 et 100
     score = Math.max(0, Math.min(100, score));
+    
+    const biologicalAge = age + Math.round((100 - score) * 0.3);
     
     return {
         score,
-        biologicalAge: age + Math.round((100 - score) * 0.3),
+        biologicalAge,
         chronologicalAge: age,
         interpretation: score >= 80 ? 'EXCELLENT - Profil optimal' : 
                        score >= 65 ? 'BON - Santé préservée' :
@@ -670,9 +636,9 @@ function calculateDefaultScore() {
             trend: score >= 80 ? 'Vieillissement optimal' : 'Vieillissement normal'
         },
         priorities: [
-            { key: 'sleep', label: 'Sommeil', percentage: 75 },
-            { key: 'exercise', label: 'Activité physique', percentage: 65 },
-            { key: 'nutrition', label: 'Nutrition', percentage: 80 }
+            { label: 'Sommeil', percentage: 75 },
+            { label: 'Activité physique', percentage: 65 },
+            { label: 'Nutrition', percentage: 80 }
         ],
         projections: score >= 80 ? [
             '🌟 Excellence biologique maintenue',
@@ -680,7 +646,7 @@ function calculateDefaultScore() {
             '🌟 Espérance de vie : +10-15 ans'
         ] : [
             '⚠️ Amélioration nécessaire',
-            '💡 Potentiel non exploité : 5-10 ans',
+            '💡 Potentiel d\'optimisation : 5-10 ans',
             '🚀 Objectif : Passer en zone verte'
         ]
     };
@@ -710,9 +676,7 @@ function showResults(result) {
     // Interprétation
     const interpretation = document.getElementById('interpretation');
     if (interpretation) {
-        interpretation.innerHTML = `
-            <h3>${result.interpretation}</h3>
-        `;
+        interpretation.innerHTML = `<h3>${result.interpretation}</h3>`;
     }
     
     // Niveau de risque
@@ -775,7 +739,6 @@ function animateScore(targetScore) {
         const offset = circumference - (currentScore / 100) * circumference;
         scoreProgress.style.strokeDashoffset = offset;
         
-        // Couleur selon le score
         if (currentScore < 40) {
             scoreProgress.style.stroke = '#FF4444';
         } else if (currentScore < 60) {
