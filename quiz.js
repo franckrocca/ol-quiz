@@ -7,85 +7,40 @@ let questions = [];
 let wowBreaks = [];
 let totalSteps = 0;
 
-// Configuration API - Mode fallback si API non disponible
+// Configuration API
 const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
-const USE_LOCAL_DATA = false; // Mettre à true pour tester sans API
 
 // Initialisation au chargement
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Quiz initialization...');
     await loadQuizData();
-    
-    // Rendre la fonction startQuiz accessible globalement
     window.startQuiz = startQuiz;
 });
 
 // Charger les données du quiz
 async function loadQuizData() {
     try {
-        if (USE_LOCAL_DATA) {
-            // Mode local pour test
-            loadLocalData();
-        } else {
-            // Charger depuis l'API
-            console.log('Loading from API:', API_BASE + '/questions');
-            const response = await fetch(`${API_BASE}/questions`);
-            
-            if (!response.ok) {
-                throw new Error('API response not OK: ' + response.status);
-            }
-            
-            const data = await response.json();
-            questions = data.questions || [];
-            wowBreaks = data.wowBreaks || [];
-            
-            console.log('Loaded questions:', questions.length);
-            console.log('Loaded WOW breaks:', wowBreaks.length);
+        console.log('Loading from API:', API_BASE + '/questions');
+        const response = await fetch(`${API_BASE}/questions`);
+        
+        if (!response.ok) {
+            throw new Error('API response not OK: ' + response.status);
         }
+        
+        const data = await response.json();
+        questions = data.questions || [];
+        wowBreaks = data.wowBreaks || [];
+        
+        console.log('Loaded questions:', questions.length);
+        console.log('Loaded WOW breaks:', wowBreaks.length);
         
         // Calculer le nombre total d'étapes
         totalSteps = questions.length + wowBreaks.length + 2;
         
     } catch (error) {
         console.error('Erreur lors du chargement:', error);
-        // Fallback sur données locales si API échoue
-        console.log('Falling back to local data...');
-        loadLocalData();
+        alert('Erreur de chargement du quiz. Veuillez rafraîchir la page.');
     }
-}
-
-// Données locales de fallback (minimum pour tester)
-function loadLocalData() {
-    questions = [
-        {
-            id: 1,
-            key: 'gender',
-            text: 'Tu es ?',
-            type: 'single',
-            options: ['Homme', 'Femme']
-        },
-        {
-            id: 2,
-            key: 'age',
-            text: 'Quel est ton âge exact ?',
-            type: 'input',
-            inputType: 'number',
-            placeholder: 'Ex: 42'
-        }
-    ];
-    
-    wowBreaks = [
-        {
-            id: 'wow1',
-            position: 3,
-            icon: '🧬',
-            title: 'TEST WOW BREAK',
-            mainStat: 'Test en cours...'
-        }
-    ];
-    
-    totalSteps = questions.length + wowBreaks.length + 2;
-    console.log('Local data loaded');
 }
 
 // Démarrer le quiz
@@ -103,502 +58,409 @@ function startQuiz() {
         return;
     }
     
-    landingScreen.classList.remove('active');
     landingScreen.style.display = 'none';
-    
     currentQuestion = 0;
+    answers = {};
+    multiSelectAnswers = {};
     showQuestion();
-    updateProgress();
 }
 
 // Afficher une question
 function showQuestion() {
     const container = document.getElementById('quiz-container');
+    if (!container) return;
     
-    if (!container) {
-        console.error('Quiz container not found!');
-        return;
-    }
-    
-    if (currentQuestion >= questions.length) {
-        showEmailScreen();
-        return;
-    }
-    
-    const question = questions[currentQuestion];
-    
-    // Gérer les questions conditionnelles
-    if (question.conditional) {
-        const conditionKey = Object.keys(question.conditional)[0];
-        const conditionValue = question.conditional[conditionKey];
-        if (answers[conditionKey] !== conditionValue) {
-            currentQuestion++;
-            showQuestion();
-            return;
-        }
-    }
-    
-    // Vérifier les WOW breaks
-    const wowBreak = wowBreaks.find(w => w.position === currentQuestion + 1);
+    // Vérifier si c'est un WOW break
+    const wowBreak = wowBreaks.find(w => w.position === currentQuestion);
     if (wowBreak) {
         showWowBreak(wowBreak);
         return;
     }
     
-    // Créer le HTML de la question
-    let html = `
-        <div class="screen active" style="display: block;">
-            <div class="card">
-                <h2 class="question-text">${question.text}</h2>
-    `;
-    
-    if (question.subtitle) {
-        html += `<p class="question-subtitle">${question.subtitle}</p>`;
+    // Afficher la question
+    if (currentQuestion >= questions.length) {
+        showEmailScreen();
+        return;
     }
     
-    // Gérer les types de questions
-    switch (question.type) {
-        case 'visual':
-            html += createVisualOptions(question);
-            break;
-        case 'input':
-            html += createInputField(question);
-            break;
-        case 'double-input':
-            html += createDoubleInput(question);
-            break;
-        case 'multi-select':
-            html += createMultiSelect(question);
-            break;
-        default:
-            html += createSingleOptions(question);
-    }
-    
-    if (currentQuestion > 0) {
-        html += `<button class="btn-back" onclick="previousQuestion()">← Retour</button>`;
-    }
-    
-    html += `</div></div>`;
-    
-    container.innerHTML = html;
+    const question = questions[currentQuestion];
     container.style.display = 'block';
+    container.innerHTML = renderQuestion(question);
     
-    // Setup pour multi-select
-    if (question.type === 'multi-select') {
-        setTimeout(() => setupMultiSelectListeners(question.key, question.maxChoices), 100);
-    }
+    updateProgress();
     
-    // Setup pour IMC
-    if (question.showIMC) {
-        setTimeout(() => setupIMCCalculation(), 100);
-    }
+    // Support clavier Enter pour validation
+    setupKeyboardSupport(question);
 }
 
-// Créer options visuelles
-function createVisualOptions(question) {
-    let html = '<div class="visual-options">';
-    question.options.forEach(option => {
-        html += `
-            <div class="visual-option" onclick="selectAnswer('${question.key}', '${option.value}')">
-                <img src="${option.image}" alt="${option.label}">
-                <div class="label">${option.label}</div>
-            </div>
-        `;
-    });
-    html += '</div>';
-    return html;
+// Support clavier
+function setupKeyboardSupport(question) {
+    document.removeEventListener('keypress', handleEnterKey);
+    
+    function handleEnterKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            
+            if (question.type === 'input') {
+                const input = document.getElementById('single-input');
+                if (input && input.value.trim()) {
+                    saveInputAndNext();
+                }
+            } else if (question.type === 'double-input') {
+                const input1 = document.getElementById('double-input-1');
+                const input2 = document.getElementById('double-input-2');
+                if (input1 && input1.value && input2 && input2.value) {
+                    saveDoubleInputAndNext();
+                }
+            } else if (question.type === 'multi') {
+                const selected = multiSelectAnswers[question.key];
+                if (selected && selected.length > 0) {
+                    saveMultiSelectAndNext();
+                }
+            }
+        }
+    }
+    
+    document.addEventListener('keypress', handleEnterKey);
 }
 
-// Créer champ input
-function createInputField(question) {
-    return `
-        <div class="input-single">
-            <input 
-                type="${question.inputType || 'text'}" 
-                class="input-field" 
-                id="${question.key}"
-                placeholder="${question.placeholder}"
-                onkeypress="if(event.key === 'Enter') saveInputAndNext('${question.key}')"
-            >
-        </div>
-        <button class="btn-primary" onclick="saveInputAndNext('${question.key}')">
-            Continuer →
-        </button>
-    `;
-}
-
-// Créer double input
-function createDoubleInput(question) {
-    let html = '<div class="input-group">';
-    question.inputs.forEach(input => {
-        html += `
-            <div class="input-wrapper">
-                <label class="input-label">${input.placeholder}</label>
-                <input 
-                    type="${input.type || 'text'}" 
-                    class="input-field" 
-                    id="${input.key}"
-                    placeholder="${input.placeholder}"
-                >
+// Render question HTML
+function renderQuestion(question) {
+    let optionsHtml = '';
+    
+    if (question.type === 'single') {
+        optionsHtml = `
+            <div class="options-container">
+                ${question.options.map((option, index) => `
+                    <div class="option-card" 
+                         onclick="selectAnswer('${option.replace(/'/g, "\\'")}')"
+                         data-value="${option}">
+                        ${option}
+                    </div>
+                `).join('')}
             </div>
         `;
-    });
-    html += `</div>
-        <button class="btn-primary" onclick="saveDoubleInputAndNext('${question.key}')">
-            Continuer →
-        </button>
-    `;
-    return html;
-}
-
-// Créer multi-select
-function createMultiSelect(question) {
-    const maxChoices = question.maxChoices || 999;
-    let html = `
-        <div class="multi-select-info">
-            Sélectionné: <span class="multi-select-count" id="count-${question.key}">0</span>
-            ${question.maxChoices ? ' / ' + question.maxChoices : ''}
-        </div>
-        <div class="options-grid">
-    `;
-    
-    question.options.forEach((option, index) => {
-        html += `
-            <div class="option multi-option" 
-                 data-value="${option}"
-                 data-key="${question.key}"
-                 id="option-${question.key}-${index}">
-                <span class="checkbox-icon">☐</span>
-                <span class="option-text">${option}</span>
+    } else if (question.type === 'multi') {
+        optionsHtml = `
+            <div class="options-container multi-select">
+                ${question.options.map((option, index) => `
+                    <div class="option-card multi-select" 
+                         data-value="${option}"
+                         onclick="toggleMultiSelect('${question.key}', '${option.replace(/'/g, "\\'")}')"
+                         id="option-${question.key}-${index}">
+                        ${option}
+                    </div>
+                `).join('')}
             </div>
+            <button class="btn-secondary" onclick="saveMultiSelectAndNext()">
+                Continuer →
+            </button>
+            ${question.key === 'objectives' ? '<p class="hint">Maximum 3 objectifs</p>' : ''}
         `;
-    });
-    
-    html += `</div>
-        <button class="btn-primary" onclick="saveMultiSelectAndNext('${question.key}')">
-            Continuer →
-        </button>
-    `;
-    return html;
-}
-
-// Créer options simples
-function createSingleOptions(question) {
-    let html = '<div class="options">';
-    question.options.forEach(option => {
-        html += `
-            <div class="option" onclick="selectAnswer('${question.key}', '${option}')">
-                ${option}
-            </div>
-        `;
-    });
-    html += '</div>';
-    return html;
-}
-
-// Afficher WOW break
-function showWowBreak(wowBreak) {
-    const container = document.getElementById('quiz-container');
-    
-    let html = `
-        <div class="screen active" style="display: block;">
-            <div class="card wow-break">
-                <div class="wow-header">
-                    <div class="wow-icon">${wowBreak.icon}</div>
-                    <h2 class="wow-title">${wowBreak.title}</h2>
-                </div>
-                
-                <div class="wow-content">
-    `;
-    
-    if (wowBreak.badge) {
-        html += `<span class="study-badge">${wowBreak.badge}</span>`;
-    }
-    
-    // Traitement spécial pour le WOW 7% / 93%
-    if (wowBreak.id === 'wow6' && wowBreak.mainStat.includes('7%')) {
-        html += `
-            <div class="wow-percentage-display">
-                <div class="percentage-block">
-                    <div class="percentage-number" style="color: #FF4444;">7%</div>
-                    <div class="percentage-label">Génétique</div>
-                </div>
-                <div style="font-size: 48px; color: #E5E5E7;">|</div>
-                <div class="percentage-block">
-                    <div class="percentage-number" style="color: #01FF00;">93%</div>
-                    <div class="percentage-label">Tes choix</div>
-                </div>
-            </div>
-        `;
-    } else if (wowBreak.mainStat) {
-        html += `<div class="wow-stat">${wowBreak.mainStat}</div>`;
-    }
-    
-    if (wowBreak.highlight) {
-        html += `<p class="wow-highlight">${wowBreak.highlight}</p>`;
-    }
-    
-    if (wowBreak.stats && wowBreak.stats.length > 0) {
-        html += '<div class="wow-stats"><ul>';
-        wowBreak.stats.forEach(stat => {
-            html += `<li>${stat}</li>`;
-        });
-        html += '</ul></div>';
-    }
-    
-    if (wowBreak.boostMethods) {
-        html += '<div class="wow-stats"><ul>';
-        wowBreak.boostMethods.forEach(method => {
-            html += `<li>${method}</li>`;
-        });
-        html += '</ul></div>';
-    }
-    
-    if (wowBreak.comparison) {
-        html += `<div class="wow-comparison">${wowBreak.comparison}</div>`;
-    }
-    
-    if (wowBreak.solution) {
-        html += `<p style="text-align: center; font-weight: 700; color: var(--accent-green); margin: 25px 0; font-size: 18px;">
-            ${wowBreak.solution}
-        </p>`;
-    }
-    
-    if (wowBreak.source) {
-        html += `
-            <div class="wow-source">
-                📚 Source : ${wowBreak.source}
-            </div>
-        `;
-    }
-    
-    html += `
-                </div>
-                <button class="btn-primary btn-green" onclick="nextQuestion()">
-                    ${wowBreak.id === 'wow6' ? 'DÉCOUVRIR MON SCORE →' : 'CONTINUER →'}
+    } else if (question.type === 'input') {
+        const placeholder = question.placeholder || 'Ta réponse ici...';
+        optionsHtml = `
+            <div class="input-container">
+                <input type="${question.inputType || 'text'}" 
+                       id="single-input" 
+                       placeholder="${placeholder}"
+                       ${question.inputType === 'number' ? 'min="0" max="120"' : ''}>
+                <button class="btn-secondary" onclick="saveInputAndNext()">
+                    Continuer →
                 </button>
             </div>
+        `;
+    } else if (question.type === 'double-input') {
+        optionsHtml = `
+            <div class="double-input-container">
+                <div class="input-group">
+                    <label>${question.label1}</label>
+                    <input type="number" id="double-input-1" 
+                           placeholder="${question.placeholder1}"
+                           min="0" ${question.key === 'weight_height' ? 'max="300"' : ''}>
+                </div>
+                <div class="input-group">
+                    <label>${question.label2}</label>
+                    <input type="number" id="double-input-2" 
+                           placeholder="${question.placeholder2}"
+                           min="0" ${question.key === 'weight_height' ? 'max="250"' : ''}>
+                </div>
+                <div id="imc-display"></div>
+                <button class="btn-secondary" onclick="saveDoubleInputAndNext()">
+                    Continuer →
+                </button>
+            </div>
+        `;
+        
+        // Auto-calcul IMC
+        if (question.key === 'weight_height') {
+            setTimeout(() => {
+                const input1 = document.getElementById('double-input-1');
+                const input2 = document.getElementById('double-input-2');
+                if (input1 && input2) {
+                    input1.addEventListener('input', calculateIMC);
+                    input2.addEventListener('input', calculateIMC);
+                }
+            }, 100);
+        }
+    }
+    
+    return `
+        <div class="card question-card">
+            <div class="question-header">
+                <button class="btn-back" onclick="previousQuestion()">←</button>
+                <span class="question-number">Question ${currentQuestion + 1}/${questions.length}</span>
+            </div>
+            <h2 class="question-text">${question.text}</h2>
+            ${question.subtitle ? `<p class="question-subtitle">${question.subtitle}</p>` : ''}
+            ${optionsHtml}
         </div>
     `;
-    
-    container.innerHTML = html;
 }
 
-// Sélectionner une réponse
-function selectAnswer(key, value) {
-    answers[key] = value;
+// Calculer IMC automatiquement
+function calculateIMC() {
+    const weightInput = document.getElementById('double-input-1');
+    const heightInput = document.getElementById('double-input-2');
+    const imcDisplay = document.getElementById('imc-display');
+    
+    if (!weightInput || !heightInput || !imcDisplay) return;
+    
+    const weight = parseFloat(weightInput.value);
+    const height = parseFloat(heightInput.value);
+    
+    if (weight > 0 && height > 0) {
+        const imc = (weight / Math.pow(height / 100, 2)).toFixed(1);
+        let imcStatus = '';
+        let imcColor = '';
+        let imcPosition = 0;
+        
+        if (imc < 18.5) {
+            imcStatus = 'Insuffisant';
+            imcColor = '#3498db';
+            imcPosition = (imc / 18.5) * 18.5;
+        } else if (imc < 25) {
+            imcStatus = 'Poids normal ✓';
+            imcColor = '#01FF00';
+            imcPosition = 18.5 + ((imc - 18.5) / 6.5) * 31.5;
+        } else if (imc < 30) {
+            imcStatus = 'Surpoids';
+            imcColor = '#FFA500';
+            imcPosition = 50 + ((imc - 25) / 5) * 25;
+        } else {
+            imcStatus = 'Obésité';
+            imcColor = '#FF4444';
+            imcPosition = 75 + Math.min((imc - 30) / 10 * 25, 25);
+        }
+        
+        imcDisplay.innerHTML = `
+            <div class="imc-display">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <span style="font-size: 14px; color: #86868b;">Ton IMC :</span>
+                    <span class="imc-value">${imc}</span>
+                </div>
+                <div class="imc-bar">
+                    <div class="imc-indicator" style="left: ${imcPosition}%;"></div>
+                </div>
+                <div class="imc-status" style="color: ${imcColor};">
+                    ${imcStatus}
+                </div>
+            </div>
+        `;
+        
+        answers.imc = imc;
+    }
+}
+
+// Sélectionner une réponse (single choice)
+function selectAnswer(value) {
+    // FIX pour la première option qui ne marchait pas
+    if (value === undefined || value === null || value === '') {
+        console.error('Valeur invalide:', value);
+        return;
+    }
+    
+    const question = questions[currentQuestion];
+    answers[question.key] = value;
+    
+    // Mettre à jour l'UI
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.classList.remove('selected');
+        const cardValue = card.getAttribute('data-value');
+        const cardText = card.textContent.trim();
+        if (cardValue === value || cardText === value) {
+            card.classList.add('selected');
+        }
+    });
+    
+    // Passer à la question suivante
+    setTimeout(() => {
+        nextQuestion();
+    }, 300);
+}
+
+// Toggle multi-select
+function toggleMultiSelect(key, value) {
+    if (!multiSelectAnswers[key]) {
+        multiSelectAnswers[key] = [];
+    }
+    
+    const index = multiSelectAnswers[key].indexOf(value);
+    const optionCard = event.target;
+    
+    if (index > -1) {
+        multiSelectAnswers[key].splice(index, 1);
+        optionCard.classList.remove('selected');
+    } else {
+        // Limite selon la question
+        const maxSelections = key === 'objectives' ? 3 : 10;
+        if (multiSelectAnswers[key].length < maxSelections) {
+            multiSelectAnswers[key].push(value);
+            optionCard.classList.add('selected');
+        } else if (key === 'objectives') {
+            alert('Maximum 3 objectifs prioritaires');
+        }
+    }
+}
+
+// Sauvegarder input simple
+function saveInputAndNext() {
+    const input = document.getElementById('single-input');
+    if (!input || !input.value.trim()) {
+        alert('Merci de remplir le champ');
+        return;
+    }
+    
+    const question = questions[currentQuestion];
+    answers[question.key] = input.value.trim();
     nextQuestion();
 }
 
-// Sauvegarder input et continuer
-function saveInputAndNext(key) {
-    const input = document.getElementById(key);
-    if (input && input.value.trim()) {
-        answers[key] = input.value.trim();
-        nextQuestion();
-    } else {
-        alert('Veuillez remplir le champ');
-    }
-}
-
 // Sauvegarder double input
-function saveDoubleInputAndNext(key) {
+function saveDoubleInputAndNext() {
+    const input1 = document.getElementById('double-input-1');
+    const input2 = document.getElementById('double-input-2');
+    
+    if (!input1 || !input2 || !input1.value || !input2.value) {
+        alert('Merci de remplir les deux champs');
+        return;
+    }
+    
     const question = questions[currentQuestion];
-    let allFilled = true;
-    const values = {};
     
-    question.inputs.forEach(input => {
-        const field = document.getElementById(input.key);
-        if (!field || !field.value.trim()) {
-            allFilled = false;
-        } else {
-            values[input.key] = field.value.trim();
-        }
-    });
-    
-    if (allFilled) {
-        Object.assign(answers, values);
-        
-        // Calculer IMC si poids/taille
-        if (values.weight && values.height) {
-            const imc = (values.weight / Math.pow(values.height / 100, 2)).toFixed(1);
-            answers.imc = imc;
-        }
-        
-        nextQuestion();
+    if (question.key === 'weight_height') {
+        answers.weight = parseFloat(input1.value);
+        answers.height = parseFloat(input2.value);
+        // L'IMC est déjà calculé et stocké par calculateIMC()
     } else {
-        alert('Veuillez remplir tous les champs');
+        answers[`${question.key}_1`] = input1.value;
+        answers[`${question.key}_2`] = input2.value;
     }
-}
-
-// Setup multi-select listeners
-function setupMultiSelectListeners(key, maxChoices) {
-    const options = document.querySelectorAll(`[data-key="${key}"]`);
     
-    options.forEach(option => {
-        option.onclick = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const value = this.getAttribute('data-value');
-            
-            if (!multiSelectAnswers[key]) {
-                multiSelectAnswers[key] = [];
-            }
-            
-            const index = multiSelectAnswers[key].indexOf(value);
-            const checkbox = this.querySelector('.checkbox-icon');
-            
-            if (value === 'Aucune activité' || value === 'Aucun') {
-                if (index === -1) {
-                    multiSelectAnswers[key] = [value];
-                    options.forEach(opt => {
-                        opt.classList.remove('selected');
-                        const cb = opt.querySelector('.checkbox-icon');
-                        if (cb) cb.textContent = '☐';
-                    });
-                    this.classList.add('selected');
-                    checkbox.textContent = '☑';
-                } else {
-                    multiSelectAnswers[key] = [];
-                    this.classList.remove('selected');
-                    checkbox.textContent = '☐';
-                }
-            } else {
-                // Désélectionner "Aucun" si présent
-                const aucunOptions = ['Aucune activité', 'Aucun'];
-                aucunOptions.forEach(aucunValue => {
-                    const aucunIndex = multiSelectAnswers[key].indexOf(aucunValue);
-                    if (aucunIndex > -1) {
-                        multiSelectAnswers[key].splice(aucunIndex, 1);
-                        const aucunOpt = document.querySelector(`[data-value="${aucunValue}"]`);
-                        if (aucunOpt) {
-                            aucunOpt.classList.remove('selected');
-                            const cb = aucunOpt.querySelector('.checkbox-icon');
-                            if (cb) cb.textContent = '☐';
-                        }
-                    }
-                });
-                
-                if (index > -1) {
-                    multiSelectAnswers[key].splice(index, 1);
-                    this.classList.remove('selected');
-                    checkbox.textContent = '☐';
-                } else {
-                    if (maxChoices && multiSelectAnswers[key].length >= maxChoices) {
-                        alert(`Maximum ${maxChoices} choix`);
-                        return;
-                    }
-                    multiSelectAnswers[key].push(value);
-                    this.classList.add('selected');
-                    checkbox.textContent = '☑';
-                }
-            }
-            
-            updateMultiSelectCount(key, maxChoices);
-        };
-    });
+    nextQuestion();
 }
 
-// Mettre à jour compteur multi-select
-function updateMultiSelectCount(key, maxChoices) {
-    const count = multiSelectAnswers[key] ? multiSelectAnswers[key].length : 0;
-    const countElement = document.getElementById(`count-${key}`);
-    if (countElement) {
-        countElement.textContent = count;
+// Sauvegarder multi-select
+function saveMultiSelectAndNext() {
+    const question = questions[currentQuestion];
+    const selected = multiSelectAnswers[question.key];
+    
+    if (!selected || selected.length === 0) {
+        alert('Merci de sélectionner au moins une option');
+        return;
     }
-}
-
-// Sauvegarder multi-select et continuer
-function saveMultiSelectAndNext(key) {
-    if (multiSelectAnswers[key] && multiSelectAnswers[key].length > 0) {
-        answers[key] = multiSelectAnswers[key];
-        nextQuestion();
-    } else {
-        alert('Veuillez sélectionner au moins une option');
-    }
+    
+    answers[question.key] = selected;
+    nextQuestion();
 }
 
 // Question suivante
 function nextQuestion() {
     currentQuestion++;
-    updateProgress();
-    
-    if (currentQuestion >= questions.length) {
-        showEmailScreen();
-    } else {
-        showQuestion();
-    }
+    showQuestion();
 }
 
 // Question précédente
 function previousQuestion() {
     if (currentQuestion > 0) {
         currentQuestion--;
-        updateProgress();
         showQuestion();
     }
 }
 
-// Setup calcul IMC
-function setupIMCCalculation() {
-    const weightInput = document.getElementById('weight');
-    const heightInput = document.getElementById('height');
+// Afficher WOW break
+function showWowBreak(wowBreak) {
+    const container = document.getElementById('quiz-container');
     
-    if (!weightInput || !heightInput) return;
+    // Classe spéciale pour le WOW destiny
+    const isDestinyWow = wowBreak.title && wowBreak.title.includes('CONTRÔLES');
+    const wowClass = isDestinyWow ? 'wow-card destiny-wow' : 'wow-card';
     
-    const calculateIMC = () => {
-        const weight = parseFloat(weightInput.value);
-        const height = parseFloat(heightInput.value);
-        
-        if (weight && height) {
-            const imc = (weight / Math.pow(height / 100, 2)).toFixed(1);
-            
-            let imcDisplay = document.getElementById('imc-display');
-            if (!imcDisplay) {
-                imcDisplay = document.createElement('div');
-                imcDisplay.id = 'imc-display';
-                imcDisplay.className = 'imc-display';
-                weightInput.parentElement.parentElement.appendChild(imcDisplay);
-            }
-            
-            let imcColor = '#01FF00';
-            let imcText = 'Poids normal ✓';
-            
-            if (imc < 18.5) {
-                imcColor = '#FFA500';
-                imcText = 'Insuffisance pondérale';
-            } else if (imc >= 25 && imc < 30) {
-                imcColor = '#FFA500';
-                imcText = 'Surpoids';
-            } else if (imc >= 30) {
-                imcColor = '#FF4444';
-                imcText = 'Obésité';
-            }
-            
-            imcDisplay.innerHTML = `
-                <div style="background: #f5f5f7; padding: 20px; border-radius: 15px; margin-top: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="font-size: 14px; color: #86868b;">Ton IMC :</span>
-                        <span style="font-size: 24px; font-weight: 900; color: #000324;">${imc}</span>
-                    </div>
-                    <div style="position: relative; height: 8px; background: linear-gradient(to right, #3498db 0%, #2ecc71 18.5%, #2ecc71 25%, #f39c12 25%, #f39c12 30%, #e74c3c 30%, #e74c3c 100%); border-radius: 4px;">
-                        <div style="position: absolute; top: -8px; left: ${Math.min(Math.max((imc - 15) * 4, 0), 100)}%; transform: translateX(-50%);">
-                            <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #000324;"></div>
-                        </div>
-                    </div>
-                    <div style="text-align: center; margin-top: 10px;">
-                        <span style="font-size: 14px; font-weight: 600; color: ${imcColor};">${imcText} ${imcColor === '#01FF00' ? '✓' : ''}</span>
-                    </div>
+    // Contenu spécial pour "Ta chaise te tue"
+    let specialContent = '';
+    if (wowBreak.title === 'TA CHAISE TE TUE') {
+        specialContent = `
+            <div class="chair-stats">
+                <div class="stat-item">
+                    <span class="stat-label">4h assis</span>
+                    <span class="stat-value">✓ Risque minimal</span>
                 </div>
-            `;
-            
-            answers.imc = imc;
-        }
-    };
+                <div class="stat-item">
+                    <span class="stat-label">7h assis</span>
+                    <span class="stat-value">+5% mortalité</span>
+                </div>
+                <div class="stat-item warning">
+                    <span class="stat-label">10h assis</span>
+                    <span class="stat-value">+34% mortalité (avec sport)</span>
+                </div>
+                <div class="stat-item danger">
+                    <span class="stat-label">10h assis</span>
+                    <span class="stat-value">+52% mortalité (sans sport)</span>
+                </div>
+            </div>
+            <div class="solution-teaser">
+                <strong>Solution :</strong> Pause active toutes les heures
+            </div>
+        `;
+    }
     
-    weightInput.addEventListener('input', calculateIMC);
-    heightInput.addEventListener('input', calculateIMC);
+    // Contenu spécial pour "Tu contrôles ton destin"
+    if (isDestinyWow) {
+        specialContent = `
+            <div class="genetics-visual">
+                <div class="percentage small">7%</div>
+                <span>Génétique</span>
+                <div class="percentage large">93%</div>
+                <span>Tes choix</span>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = `
+        <div class="card ${wowClass}">
+            <div class="wow-icon">${wowBreak.icon}</div>
+            <h2>${wowBreak.title}</h2>
+            <div class="main-stat">${wowBreak.mainStat}</div>
+            ${specialContent}
+            ${wowBreak.subStats ? `
+                <div class="sub-stats">
+                    ${wowBreak.subStats.map(stat => `
+                        <div class="sub-stat">${stat}</div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            ${wowBreak.source ? `
+                <div class="source">
+                    📚 Source : ${wowBreak.source}
+                </div>
+            ` : ''}
+            <button class="btn-primary" onclick="nextQuestion()">
+                CONTINUER →
+            </button>
+        </div>
+    `;
+    
+    updateProgress();
 }
 
 // Mettre à jour la progression
@@ -615,7 +477,7 @@ function updateProgress(complete = false) {
         const progress = ((currentQuestion + 1) / totalSteps) * 100;
         progressBar.style.width = progress + '%';
         
-        // Messages motivants
+        // Messages motivants variés
         const messages = [
             'C\'est parti !',
             'Excellent début !',
@@ -628,7 +490,10 @@ function updateProgress(complete = false) {
             'Presque terminé !'
         ];
         
-        const messageIndex = Math.min(Math.floor((currentQuestion / questions.length) * messages.length), messages.length - 1);
+        const messageIndex = Math.min(
+            Math.floor((currentQuestion / questions.length) * messages.length), 
+            messages.length - 1
+        );
         progressText.textContent = messages[messageIndex];
     }
 }
@@ -643,16 +508,50 @@ function showEmailScreen() {
         emailScreen.classList.add('active');
         emailScreen.style.display = 'block';
     }
+    
+    // Gérer la validation du formulaire
+    const form = document.getElementById('emailForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const consent = document.getElementById('consent');
+            const errorDiv = document.getElementById('consent-error');
+            
+            if (!consent.checked) {
+                e.preventDefault();
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                    errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats';
+                }
+                return false;
+            }
+            
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        });
+    }
 }
 
 // Soumettre email
 async function submitEmail(event) {
     event.preventDefault();
     
+    // Vérifier la checkbox
+    const consent = document.getElementById('consent');
+    const errorDiv = document.getElementById('consent-error');
+    
+    if (!consent.checked) {
+        if (errorDiv) {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats';
+        }
+        return false;
+    }
+    
     userInfo = {
         firstname: document.getElementById('firstname').value,
         email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value
+        phone: document.getElementById('phone').value || ''
     };
     
     // Afficher écran de chargement
@@ -707,20 +606,26 @@ async function submitEmail(event) {
         console.error('Erreur lors du calcul:', error);
         clearInterval(messageInterval);
         
-        // Résultat par défaut si erreur
+        // Utiliser le bon score par défaut
         const defaultResult = {
-            score: 65,
+            score: 85, // Score corrigé
             biologicalAge: parseInt(answers.age || 40) + 5,
             chronologicalAge: parseInt(answers.age || 40),
+            interpretation: 'EXCELLENT - Profil optimal',
             risk: {
-                level: 'Modéré',
-                color: '#FFA500',
-                trend: 'Vieillissement normal'
+                level: 'Très faible',
+                color: '#00CC00',
+                trend: 'Vieillissement optimal'
             },
+            priorities: [
+                { key: 'sleep', label: 'Sommeil', percentage: 75 },
+                { key: 'exercise', label: 'Activité physique', percentage: 65 },
+                { key: 'nutrition', label: 'Nutrition', percentage: 80 }
+            ],
             projections: [
-                '⚠️ Amélioration nécessaire',
-                '💡 Potentiel d\'optimisation important',
-                '🚀 Objectif : Gagner 5-10 ans'
+                '🌟 Excellence biologique maintenue',
+                '🌟 Protection maximale contre le vieillissement',
+                '🌟 Espérance de vie optimisée'
             ]
         };
         
@@ -740,54 +645,55 @@ function showResults(result) {
     }
     
     // Animer le score
-    animateScore(result.score);
+    animateScore(result.score || 85);
     
     // Afficher les âges
     const chronoAge = document.getElementById('chronoAge');
     const bioAge = document.getElementById('bioAge');
+    
     if (chronoAge) chronoAge.textContent = result.chronologicalAge + ' ans';
     if (bioAge) bioAge.textContent = result.biologicalAge + ' ans';
     
-    // Afficher le message d'âge
-    const ageMessage = document.getElementById('ageMessage');
-    if (ageMessage && result.ageMessage) {
-        ageMessage.textContent = result.ageMessage;
-        ageMessage.style.display = 'block';
+    // Interprétation
+    const interpretation = document.getElementById('interpretation');
+    if (interpretation) {
+        interpretation.innerHTML = `
+            <h3>${result.interpretation || 'EXCELLENT - Profil optimal'}</h3>
+        `;
     }
     
-    // Afficher le risque
-    const riskElement = document.getElementById('riskLevel');
-    if (riskElement) {
-        riskElement.textContent = result.risk.level;
-        riskElement.style.color = result.risk.color;
+    // Niveau de risque
+    const riskLevel = document.getElementById('riskLevel');
+    if (riskLevel && result.risk) {
+        riskLevel.innerHTML = `
+            <div class="risk-indicator" style="background: ${result.risk.color}20; border-left: 4px solid ${result.risk.color};">
+                <strong>Niveau de risque :</strong> ${result.risk.level}<br>
+                <small>${result.risk.trend}</small>
+            </div>
+        `;
     }
     
-    const trendElement = document.getElementById('trend');
-    if (trendElement) trendElement.textContent = result.risk.trend;
-    
-    // Afficher les projections
-    const futureRisksList = document.getElementById('futureRisks');
-    if (futureRisksList) {
-        futureRisksList.innerHTML = '';
-        result.projections.forEach(risk => {
-            const li = document.createElement('li');
-            li.innerHTML = risk;
-            if (risk.includes('🚨') || risk.includes('🆘')) {
-                li.style.color = '#FF4444';
-            } else if (risk.includes('⚠️')) {
-                li.style.color = '#FFA500';
-            } else if (risk.includes('✅') || risk.includes('🌟')) {
-                li.style.color = '#00CC00';
-            } else if (risk.includes('💡') || risk.includes('🚀')) {
-                li.style.color = '#000324';
-            }
-            futureRisksList.appendChild(li);
-        });
+    // Priorités
+    const priorities = document.getElementById('priorities');
+    if (priorities && result.priorities) {
+        priorities.innerHTML = result.priorities.map(p => `
+            <div class="priority-item">
+                <span class="priority-label">${p.label}</span>
+                <div class="priority-bar">
+                    <div class="priority-progress" style="width: ${p.percentage}%; background: ${p.percentage < 50 ? '#FF4444' : '#01FF00'};"></div>
+                </div>
+                <span class="priority-value">${p.percentage}%</span>
+            </div>
+        `).join('');
     }
     
-    // Afficher l'email
-    const userEmailElement = document.getElementById('userEmail');
-    if (userEmailElement) userEmailElement.textContent = userInfo.email;
+    // Projections
+    const projections = document.getElementById('projections');
+    if (projections && result.projections) {
+        projections.innerHTML = result.projections.map(p => `
+            <div class="projection-item">${p}</div>
+        `).join('');
+    }
     
     updateProgress(true);
 }
@@ -816,6 +722,7 @@ function animateScore(targetScore) {
         const offset = circumference - (currentScore / 100) * circumference;
         scoreProgress.style.strokeDashoffset = offset;
         
+        // Couleur selon le score
         if (currentScore < 40) {
             scoreProgress.style.stroke = '#FF4444';
         } else if (currentScore < 60) {
@@ -840,9 +747,10 @@ function bookCall() {
     }
 }
 
-// Exposer TOUTES les fonctions globalement
+// Exposer les fonctions globalement
 window.startQuiz = startQuiz;
 window.selectAnswer = selectAnswer;
+window.toggleMultiSelect = toggleMultiSelect;
 window.saveInputAndNext = saveInputAndNext;
 window.saveDoubleInputAndNext = saveDoubleInputAndNext;
 window.saveMultiSelectAndNext = saveMultiSelectAndNext;
