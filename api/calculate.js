@@ -253,9 +253,23 @@ export default async function handler(req, res) {
   // Score final sur 100
   const finalScore = Math.round((totalScore / maxPossible) * 100);
 
-  // Calcul de l'âge biologique (basé sur Levine et al., 2018)
+  // Calcul de l'âge biologique estimé (avec formulation prudente)
   const agePenalty = Math.round((100 - finalScore) * 0.3);
   const biologicalAge = age + agePenalty;
+  
+  // Formulation prudente pour l'âge biologique
+  let ageMessage = '';
+  if (agePenalty <= -5) {
+    ageMessage = 'Tu as probablement un profil biologique plus jeune que ton âge';
+  } else if (agePenalty <= 0) {
+    ageMessage = 'Ton profil biologique correspond à ton âge chronologique';
+  } else if (agePenalty <= 5) {
+    ageMessage = 'Ton profil suggère un léger vieillissement accéléré';
+  } else if (agePenalty <= 10) {
+    ageMessage = 'Attention : signes de vieillissement prématuré détectés';
+  } else {
+    ageMessage = 'Alerte : vieillissement biologique significativement accéléré';
+  }
 
   // Identification des 3 priorités
   const priorities = Object.entries(categoryScores)
@@ -322,9 +336,65 @@ export default async function handler(req, res) {
     ];
   }
 
-  // Envoi vers Google Sheets
+  // Envoi vers Google Sheets avec TOUTES les données
   try {
     const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbwjyAjH9Nl6y2IeRWHi5Qrr6ftqVilH4T9RMPAdNXM_XYVuaN0WFzrPPYwVL8oOZR0W/exec';
+    
+    // Préparer toutes les données pour Google Sheets
+    const dataForSheet = {
+      timestamp: new Date().toISOString(),
+      firstname: userInfo.firstname,
+      email: userInfo.email,
+      phone: userInfo.phone,
+      score: finalScore,
+      biologicalAge,
+      chronologicalAge: age,
+      ageDifference: biologicalAge - age,
+      riskLevel,
+      // Toutes les réponses individuelles
+      gender: answers.gender || '',
+      age: answers.age || '',
+      weight: answers.weight || '',
+      height: answers.height || '',
+      imc: answers.imc || '',
+      goals: Array.isArray(answers.goals) ? answers.goals.join(', ') : '',
+      energy3y: answers.energy3y || '',
+      last100: answers.last100 || '',
+      barriers: answers.barriers || '',
+      stairs: answers.stairs || '',
+      sitting: answers.sitting || '',
+      nightAwakenings: answers.nightAwakenings || '',
+      femaleSpecific: answers.femaleSpecific || '',
+      libido: answers.libido || '',
+      crash: answers.crash || '',
+      weightVsIdeal: answers.weightVsIdeal || '',
+      digestion: answers.digestion || '',
+      jointPain: answers.jointPain || '',
+      cognition: answers.cognition || '',
+      recovery: answers.recovery || '',
+      stress: answers.stress || '',
+      skin: answers.skin || '',
+      environment: answers.environment || '',
+      sun: answers.sun || '',
+      nature: answers.nature || '',
+      sleepQuality: answers.sleepQuality || '',
+      bedtime: answers.bedtime || '',
+      screens: answers.screens || '',
+      breakfast: answers.breakfast || '',
+      hydration: answers.hydration || '',
+      alcohol: answers.alcohol || '',
+      activities: Array.isArray(answers.activities) ? answers.activities.join(', ') : '',
+      frequency: answers.frequency || '',
+      supplements: answers.supplements || '',
+      tracking: Array.isArray(answers.tracking) ? answers.tracking.join(', ') : '',
+      social: answers.social || '',
+      vacations: answers.vacations || '',
+      projection: answers.projection || '',
+      fear: answers.fear || '',
+      motivation: Array.isArray(answers.motivation) ? answers.motivation.join(', ') : '',
+      budget: answers.budget || '',
+      time: answers.time || ''
+    };
     
     await fetch(googleScriptUrl, {
       method: 'POST',
@@ -332,27 +402,20 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...userInfo,
-        score: finalScore,
-        biologicalAge,
-        chronologicalAge: age,
-        riskLevel,
-        answers,
-        timestamp: new Date().toISOString()
-      })
+      body: JSON.stringify(dataForSheet)
     });
   } catch (error) {
     console.error('Erreur Google Sheets:', error);
   }
 
-  // Réponse
+  // Réponse complète
   res.status(200).json({
     success: true,
     score: finalScore,
     biologicalAge,
     chronologicalAge: age,
     ageDifference: biologicalAge - age,
+    ageMessage,
     risk: {
       level: riskLevel,
       color: riskColor,
