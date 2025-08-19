@@ -22,11 +22,7 @@ async function loadQuizData() {
         const questionsResponse = await fetch(`${API_BASE}/questions`);
         const questionsData = await questionsResponse.json();
         questions = questionsData.questions;
-        
-        // Charger les WOW breaks
-        const wowResponse = await fetch(`${API_BASE}/wow-breaks`);
-        const wowData = await wowResponse.json();
-        wowBreaks = wowData.wowBreaks;
+        wowBreaks = questionsData.wowBreaks;
         
         // Calculer le nombre total d'étapes
         totalSteps = questions.length + wowBreaks.length + 2; // +2 pour email et résultats
