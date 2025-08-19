@@ -231,13 +231,11 @@ export default function handler(req, res) {
     maxPossible += 100;
   }
 
-  // Score final sur 100 - TOUJOURS 85 pour cohérence avec l'email
+  // Score final sur 100
   let finalScore = Math.round((totalScore / maxPossible) * 100);
   
-  // Ajustement pour avoir le bon score
-  if (finalScore < 80 && Object.keys(answers).length > 30) {
-    finalScore = 85; // Score corrigé pour cohérence
-  }
+  // S'assurer que le score est réaliste (entre 15 et 95)
+  finalScore = Math.max(15, Math.min(95, finalScore));
 
   // Calcul de l'âge biologique estimé
   const agePenalty = Math.round((100 - finalScore) * 0.3);
@@ -385,7 +383,7 @@ async function sendResultEmail(result, answers) {
       priorities: result.priorities,
       projections: result.projections,
       
-      // Données complètes pour l'email
+      // Données complètes pour l'email sans undefined
       age: answers.age || 'Non renseigné',
       gender: answers.gender || 'Non renseigné',
       imc: answers.imc ? `${answers.imc} (${getIMCStatus(answers.imc)})` : 'Non calculé',
@@ -396,20 +394,24 @@ async function sendResultEmail(result, answers) {
       alcohol: answers.alcohol_consumption || 'Non renseigné',
       hydration: answers.hydration || 'Non renseigné',
       energy: answers.morning_energy || 'Non renseigné',
-      objectives: Array.isArray(answers.objectives) ? answers.objectives.join(', ') : 'Non renseigné'
+      objectives: Array.isArray(answers.objectives) ? answers.objectives.join(', ') : 'Non renseigné',
+      tracking: Array.isArray(answers.tracking) ? answers.tracking.join(', ') : 'Non renseigné',
+      blockers: Array.isArray(answers.blockers) ? answers.blockers.join(', ') : 'Non renseigné'
     }
   };
 
-  // Ici, intégrer avec votre service d'email (SendGrid, Mailgun, etc.)
+  // Ici, intégrer avec votre service d'email (SendGrid, Google Script, etc.)
   // Pour le moment, on log simplement
   console.log('Email à envoyer:', emailData);
   
-  // Exemple avec un webhook ou API externe
-  // await fetch('https://your-email-service.com/send', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(emailData)
-  // });
+  // Si vous utilisez Google Script :
+  /*
+  await fetch('YOUR_GOOGLE_SCRIPT_URL', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(emailData)
+  });
+  */
 }
 
 function getIMCStatus(imc) {
