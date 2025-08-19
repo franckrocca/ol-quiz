@@ -9,7 +9,7 @@
     --red: #FF4444;
     --orange: #FFA500;
     --max-width: 600px;
-    --max-width-results: 1000px; /* Plus large pour résultats */
+    --max-width-results: 900px; /* CORRECTION 7: Plus large */
 }
 
 /* Reset & Base */
@@ -112,35 +112,40 @@ body {
     padding: 60px 40px;
 }
 
-/* Card résultats PLUS LARGE */
+/* CORRECTION 7: Card résultats plus large */
 .card.results-card {
     max-width: var(--max-width-results);
     margin: 0 auto;
-    padding: 60px;
+    padding: 50px;
 }
 
-/* WOW Cards COMPACTES */
+/* CORRECTION 4 & 5: WOW Cards plus compactes */
 .wow-card {
-    padding: 25px !important; /* Réduit */
+    padding: 25px !important;
     text-align: center;
     max-height: calc(100vh - 150px);
-    overflow: hidden; /* Pas de scroll */
+    overflow: hidden;
+}
+
+.wow-card.wow-destiny {
+    padding: 20px !important; /* Encore plus compact pour destiny */
 }
 
 .wow-icon {
-    font-size: 40px; /* Réduit */
+    font-size: 40px;
     margin-bottom: 10px;
 }
 
 .wow-title {
-    font-size: 22px; /* Réduit */
+    font-size: 22px;
     font-weight: 800;
     color: var(--dark-blue);
     margin-bottom: 12px;
+    line-height: 1.1;
 }
 
 .wow-main-stat {
-    font-size: 28px; /* Réduit */
+    font-size: 28px;
     font-weight: 900;
     color: var(--primary-green);
     margin: 15px 0;
@@ -148,19 +153,19 @@ body {
 }
 
 .wow-sub-stats {
-    margin: 15px 0; /* Réduit */
+    margin: 15px 0;
 }
 
 .sub-stat {
     background: var(--gray-light);
-    padding: 10px; /* Réduit */
+    padding: 10px;
     margin-bottom: 8px;
     border-radius: 8px;
     font-size: 13px;
 }
 
 .wow-source {
-    margin-top: 15px; /* Réduit */
+    margin-top: 15px;
     padding-top: 12px;
     border-top: 1px solid var(--gray-light);
     font-size: 11px;
@@ -168,37 +173,37 @@ body {
 }
 
 .wow-continue {
-    margin-top: 15px !important; /* Réduit */
+    margin-top: 15px !important;
 }
 
-/* WOW Chaise stats */
+/* Chair stats WOW */
 .chair-stats {
     margin: 15px 0;
 }
 
-.stat-row {
+.stat-item {
     display: flex;
     justify-content: space-between;
     padding: 8px 12px;
     margin-bottom: 6px;
     background: var(--gray-light);
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
-.stat-row.warning {
+.stat-item.warning-bg {
     background: #fff3cd;
     border-left: 3px solid var(--orange);
 }
 
-.stat-row.danger {
+.stat-item.danger-bg {
     background: #f8d7da;
     border-left: 3px solid var(--red);
 }
 
-.stat-ok { color: var(--primary-green); font-weight: 600; }
-.stat-warning { color: var(--orange); font-weight: 600; }
-.stat-danger { color: var(--red); font-weight: 600; }
+.stat-value.ok { color: var(--primary-green); font-weight: 600; }
+.stat-value.warning { color: var(--orange); font-weight: 600; }
+.stat-value.danger { color: var(--red); font-weight: 600; }
 
 .solution-teaser {
     margin-top: 12px;
@@ -208,11 +213,7 @@ body {
     font-size: 13px;
 }
 
-/* WOW Destiny (Tu contrôles) */
-.destiny-wow {
-    padding: 20px !important; /* Encore plus compact */
-}
-
+/* Genetics visual pour WOW destiny */
 .genetics-visual {
     display: flex;
     justify-content: center;
@@ -220,19 +221,24 @@ body {
     margin: 20px 0;
 }
 
-.genetics-stat {
+.genetics-item {
     text-align: center;
 }
 
 .percentage {
     display: block;
-    font-size: 42px; /* Réduit */
+    font-size: 42px;
     font-weight: 900;
     margin-bottom: 5px;
 }
 
 .percentage.small { color: var(--red); }
 .percentage.large { color: var(--primary-green); }
+
+.genetics-item .label {
+    font-size: 14px;
+    color: var(--dark-blue);
+}
 
 /* Logo */
 .logo {
@@ -490,8 +496,8 @@ input:focus {
     border-color: var(--primary-green);
 }
 
-/* IMC Display COMME INDEX9 */
-.imc-card {
+/* CORRECTION 1: IMC Display avec fond gris */
+.imc-container {
     background: #E8E8ED; /* Fond gris comme index9 */
     border-radius: 12px;
     padding: 20px;
@@ -517,7 +523,7 @@ input:focus {
     color: var(--dark-blue);
 }
 
-.imc-bar-container {
+.imc-bar-wrapper {
     position: relative;
     height: 12px;
     margin: 15px 0;
@@ -580,7 +586,9 @@ input:focus {
     flex: 1;
 }
 
-.error-message {
+/* CORRECTION 6: Message d'erreur */
+.error-message,
+#consent-error {
     font-size: 14px;
     color: var(--red);
     margin-top: 10px;
@@ -628,7 +636,7 @@ input:focus {
     text-align: center;
 }
 
-/* Results PAGE PLUS LARGE */
+/* Results */
 .results-title {
     text-align: center;
     margin-bottom: 40px;
@@ -729,6 +737,12 @@ input:focus {
     margin: 40px 0;
 }
 
+.priorities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .priority-item {
     display: flex;
     align-items: center;
@@ -736,7 +750,6 @@ input:focus {
     padding: 15px;
     background: #f8f9fa;
     border-radius: 10px;
-    margin-bottom: 12px;
 }
 
 .priority-label {
@@ -763,12 +776,17 @@ input:focus {
     text-align: right;
 }
 
+.projections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .projection-item {
     padding: 15px;
     background: linear-gradient(135deg, #f0fff0 0%, #ffffff 100%);
     border-left: 3px solid var(--primary-green);
     border-radius: 8px;
-    margin-bottom: 12px;
     font-size: 16px;
 }
 
