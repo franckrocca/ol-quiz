@@ -83,7 +83,16 @@ function showQuestion() {
         return;
     }
     
-    const question = questions[currentQuestion];
+    let question = questions[currentQuestion];
+    
+    // LOGIQUE SPÉCIALE : Skip question hormones pour les hommes
+    if (question.key === 'hormones' && answers.gender === 'Homme') {
+        // Passer directement à la question suivante
+        currentQuestion++;
+        showQuestion();
+        return;
+    }
+    
     container.style.display = 'block';
     container.innerHTML = renderQuestion(question);
     
@@ -134,18 +143,23 @@ function renderQuestion(question) {
                 ${question.options.map((option, index) => `
                     <div class="option-card" 
                          onclick="selectAnswer('${option.replace(/'/g, "\\'")}')"
-                         data-value="${option}">
+                         data-value="${option}"
+                         data-index="${index}">
                         ${option}
                     </div>
                 `).join('')}
             </div>
         `;
     } else if (question.type === 'multi') {
+        if (!multiSelectAnswers[question.key]) {
+            multiSelectAnswers[question.key] = [];
+        }
         optionsHtml = `
             <div class="options-container multi-select">
                 ${question.options.map((option, index) => `
                     <div class="option-card multi-select" 
                          data-value="${option}"
+                         data-index="${index}"
                          onclick="toggleMultiSelect('${question.key}', '${option.replace(/'/g, "\\'")}')"
                          id="option-${question.key}-${index}">
                         ${option}
@@ -218,7 +232,7 @@ function renderQuestion(question) {
     `;
 }
 
-// Calculer IMC automatiquement
+// Calculer IMC automatiquement (STYLE COMME INDEX9)
 function calculateIMC() {
     const weightInput = document.getElementById('double-input-1');
     const heightInput = document.getElementById('double-input-2');
@@ -232,37 +246,39 @@ function calculateIMC() {
     if (weight > 0 && height > 0) {
         const imc = (weight / Math.pow(height / 100, 2)).toFixed(1);
         let imcStatus = '';
-        let imcColor = '';
+        let imcStatusColor = '';
         let imcPosition = 0;
         
         if (imc < 18.5) {
             imcStatus = 'Insuffisant';
-            imcColor = '#3498db';
+            imcStatusColor = '#3498db';
             imcPosition = (imc / 18.5) * 18.5;
         } else if (imc < 25) {
             imcStatus = 'Poids normal ✓';
-            imcColor = '#01FF00';
+            imcStatusColor = '#01FF00';
             imcPosition = 18.5 + ((imc - 18.5) / 6.5) * 31.5;
         } else if (imc < 30) {
             imcStatus = 'Surpoids';
-            imcColor = '#FFA500';
+            imcStatusColor = '#FFA500';
             imcPosition = 50 + ((imc - 25) / 5) * 25;
         } else {
             imcStatus = 'Obésité';
-            imcColor = '#FF4444';
+            imcStatusColor = '#FF4444';
             imcPosition = 75 + Math.min((imc - 30) / 10 * 25, 25);
         }
         
+        // Style exactement comme index9
         imcDisplay.innerHTML = `
-            <div class="imc-display">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <span style="font-size: 14px; color: #86868b;">Ton IMC :</span>
+            <div class="imc-card">
+                <div class="imc-header">
+                    <span>Ton IMC :</span>
                     <span class="imc-value">${imc}</span>
                 </div>
-                <div class="imc-bar">
+                <div class="imc-bar-container">
+                    <div class="imc-bar"></div>
                     <div class="imc-indicator" style="left: ${imcPosition}%;"></div>
                 </div>
-                <div class="imc-status" style="color: ${imcColor};">
+                <div class="imc-status" style="color: ${imcStatusColor};">
                     ${imcStatus}
                 </div>
             </div>
@@ -272,26 +288,25 @@ function calculateIMC() {
     }
 }
 
-// Sélectionner une réponse (single choice)
+// Sélectionner une réponse (FIX pour première option)
 function selectAnswer(value) {
-    // FIX pour la première option qui ne marchait pas
-    if (value === undefined || value === null || value === '') {
-        console.error('Valeur invalide:', value);
-        return;
-    }
-    
     const question = questions[currentQuestion];
+    
+    // FIX : Utiliser data-index pour identifier la première option
+    const optionCards = document.querySelectorAll('.option-card');
+    const clickedCard = event ? event.target : optionCards[0];
+    
+    // Stocker la réponse
     answers[question.key] = value;
     
     // Mettre à jour l'UI
-    document.querySelectorAll('.option-card').forEach(card => {
+    optionCards.forEach(card => {
         card.classList.remove('selected');
-        const cardValue = card.getAttribute('data-value');
-        const cardText = card.textContent.trim();
-        if (cardValue === value || cardText === value) {
-            card.classList.add('selected');
-        }
     });
+    
+    if (clickedCard) {
+        clickedCard.classList.add('selected');
+    }
     
     // Passer à la question suivante
     setTimeout(() => {
@@ -299,24 +314,24 @@ function selectAnswer(value) {
     }, 300);
 }
 
-// Toggle multi-select
+// Toggle multi-select (FIX pour première option)
 function toggleMultiSelect(key, value) {
     if (!multiSelectAnswers[key]) {
         multiSelectAnswers[key] = [];
     }
     
+    const clickedCard = event.target;
     const index = multiSelectAnswers[key].indexOf(value);
-    const optionCard = event.target;
     
     if (index > -1) {
         multiSelectAnswers[key].splice(index, 1);
-        optionCard.classList.remove('selected');
+        clickedCard.classList.remove('selected');
     } else {
         // Limite selon la question
         const maxSelections = key === 'objectives' ? 3 : 10;
         if (multiSelectAnswers[key].length < maxSelections) {
             multiSelectAnswers[key].push(value);
-            optionCard.classList.add('selected');
+            clickedCard.classList.add('selected');
         } else if (key === 'objectives') {
             alert('Maximum 3 objectifs prioritaires');
         }
@@ -384,11 +399,15 @@ function nextQuestion() {
 function previousQuestion() {
     if (currentQuestion > 0) {
         currentQuestion--;
+        // Si on retourne avant la question hormones et qu'on est un homme
+        if (questions[currentQuestion].key === 'hormones' && answers.gender === 'Homme') {
+            currentQuestion--;
+        }
         showQuestion();
     }
 }
 
-// Afficher WOW break
+// Afficher WOW break (PLUS COMPACT)
 function showWowBreak(wowBreak) {
     const container = document.getElementById('quiz-container');
     
@@ -401,21 +420,21 @@ function showWowBreak(wowBreak) {
     if (wowBreak.title === 'TA CHAISE TE TUE') {
         specialContent = `
             <div class="chair-stats">
-                <div class="stat-item">
-                    <span class="stat-label">4h assis</span>
-                    <span class="stat-value">✓ Risque minimal</span>
+                <div class="stat-row">
+                    <span>4h assis</span>
+                    <span class="stat-ok">✓ Risque minimal</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">7h assis</span>
-                    <span class="stat-value">+5% mortalité</span>
+                <div class="stat-row">
+                    <span>7h assis</span>
+                    <span class="stat-warning">+5% mortalité</span>
                 </div>
-                <div class="stat-item warning">
-                    <span class="stat-label">10h assis</span>
-                    <span class="stat-value">+34% mortalité (avec sport)</span>
+                <div class="stat-row warning">
+                    <span>10h assis (avec sport)</span>
+                    <span class="stat-danger">+34% mortalité</span>
                 </div>
-                <div class="stat-item danger">
-                    <span class="stat-label">10h assis</span>
-                    <span class="stat-value">+52% mortalité (sans sport)</span>
+                <div class="stat-row danger">
+                    <span>10h assis (sans sport)</span>
+                    <span class="stat-danger">+52% mortalité</span>
                 </div>
             </div>
             <div class="solution-teaser">
@@ -428,10 +447,14 @@ function showWowBreak(wowBreak) {
     if (isDestinyWow) {
         specialContent = `
             <div class="genetics-visual">
-                <div class="percentage small">7%</div>
-                <span>Génétique</span>
-                <div class="percentage large">93%</div>
-                <span>Tes choix</span>
+                <div class="genetics-stat">
+                    <span class="percentage small">7%</span>
+                    <span>Génétique</span>
+                </div>
+                <div class="genetics-stat">
+                    <span class="percentage large">93%</span>
+                    <span>Tes choix</span>
+                </div>
             </div>
         `;
     }
@@ -439,22 +462,20 @@ function showWowBreak(wowBreak) {
     container.innerHTML = `
         <div class="card ${wowClass}">
             <div class="wow-icon">${wowBreak.icon}</div>
-            <h2>${wowBreak.title}</h2>
-            <div class="main-stat">${wowBreak.mainStat}</div>
+            <h2 class="wow-title">${wowBreak.title}</h2>
+            <div class="wow-main-stat">${wowBreak.mainStat}</div>
             ${specialContent}
-            ${wowBreak.subStats ? `
-                <div class="sub-stats">
+            ${wowBreak.subStats && !specialContent ? `
+                <div class="wow-sub-stats">
                     ${wowBreak.subStats.map(stat => `
                         <div class="sub-stat">${stat}</div>
                     `).join('')}
                 </div>
             ` : ''}
-            ${wowBreak.source ? `
-                <div class="source">
-                    📚 Source : ${wowBreak.source}
-                </div>
-            ` : ''}
-            <button class="btn-primary" onclick="nextQuestion()">
+            <div class="wow-source">
+                📚 Source : ${wowBreak.source}
+            </div>
+            <button class="btn-primary wow-continue" onclick="nextQuestion()">
                 CONTINUER →
             </button>
         </div>
@@ -520,7 +541,7 @@ function showEmailScreen() {
                 e.preventDefault();
                 if (errorDiv) {
                     errorDiv.style.display = 'block';
-                    errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats';
+                    errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats'; // FRANÇAIS
                 }
                 return false;
             }
@@ -543,7 +564,7 @@ async function submitEmail(event) {
     if (!consent.checked) {
         if (errorDiv) {
             errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats';
+            errorDiv.textContent = 'Veuillez accepter pour recevoir vos résultats'; // FRANÇAIS
         }
         return false;
     }
@@ -606,31 +627,63 @@ async function submitEmail(event) {
         console.error('Erreur lors du calcul:', error);
         clearInterval(messageInterval);
         
-        // Utiliser le bon score par défaut
-        const defaultResult = {
-            score: 85, // Score corrigé
-            biologicalAge: parseInt(answers.age || 40) + 5,
-            chronologicalAge: parseInt(answers.age || 40),
-            interpretation: 'EXCELLENT - Profil optimal',
-            risk: {
-                level: 'Très faible',
-                color: '#00CC00',
-                trend: 'Vieillissement optimal'
-            },
-            priorities: [
-                { key: 'sleep', label: 'Sommeil', percentage: 75 },
-                { key: 'exercise', label: 'Activité physique', percentage: 65 },
-                { key: 'nutrition', label: 'Nutrition', percentage: 80 }
-            ],
-            projections: [
-                '🌟 Excellence biologique maintenue',
-                '🌟 Protection maximale contre le vieillissement',
-                '🌟 Espérance de vie optimisée'
-            ]
-        };
-        
+        // Résultat par défaut avec bon calcul
+        const defaultResult = calculateDefaultScore();
         showResults(defaultResult);
     }
+}
+
+// Calculer le score par défaut (si API fail)
+function calculateDefaultScore() {
+    // Utiliser la même logique que api/calculate.js
+    let score = 50; // Base
+    
+    // Ajustements selon les réponses critiques
+    if (answers.sleep_quality === 'Excellent (7-9h, profond)') score += 10;
+    if (answers.exercise_frequency === '5-7 fois/semaine') score += 10;
+    if (answers.nutrition_quality === 'Optimale (bio, variée, équilibrée)') score += 10;
+    if (answers.stress_level === 'Très faible (zen)') score += 10;
+    if (answers.alcohol_consumption === 'Jamais') score += 5;
+    
+    // IMC optimal
+    if (answers.imc && answers.imc >= 20 && answers.imc <= 25) score += 10;
+    
+    // Age penalty
+    const age = parseInt(answers.age) || 40;
+    if (age > 50) score -= 10;
+    if (age > 60) score -= 10;
+    
+    // S'assurer que le score est entre 0 et 100
+    score = Math.max(0, Math.min(100, score));
+    
+    return {
+        score,
+        biologicalAge: age + Math.round((100 - score) * 0.3),
+        chronologicalAge: age,
+        interpretation: score >= 80 ? 'EXCELLENT - Profil optimal' : 
+                       score >= 65 ? 'BON - Santé préservée' :
+                       score >= 50 ? 'MOYEN - Optimisation nécessaire' :
+                       'ALERTE - Changements urgents',
+        risk: {
+            level: score >= 80 ? 'Très faible' : score >= 65 ? 'Faible' : 'Modéré',
+            color: score >= 80 ? '#00CC00' : score >= 65 ? '#01FF00' : '#FFA500',
+            trend: score >= 80 ? 'Vieillissement optimal' : 'Vieillissement normal'
+        },
+        priorities: [
+            { key: 'sleep', label: 'Sommeil', percentage: 75 },
+            { key: 'exercise', label: 'Activité physique', percentage: 65 },
+            { key: 'nutrition', label: 'Nutrition', percentage: 80 }
+        ],
+        projections: score >= 80 ? [
+            '🌟 Excellence biologique maintenue',
+            '🌟 Protection maximale contre le vieillissement',
+            '🌟 Espérance de vie : +10-15 ans'
+        ] : [
+            '⚠️ Amélioration nécessaire',
+            '💡 Potentiel non exploité : 5-10 ans',
+            '🚀 Objectif : Passer en zone verte'
+        ]
+    };
 }
 
 // Afficher les résultats
@@ -645,7 +698,7 @@ function showResults(result) {
     }
     
     // Animer le score
-    animateScore(result.score || 85);
+    animateScore(result.score);
     
     // Afficher les âges
     const chronoAge = document.getElementById('chronoAge');
@@ -658,7 +711,7 @@ function showResults(result) {
     const interpretation = document.getElementById('interpretation');
     if (interpretation) {
         interpretation.innerHTML = `
-            <h3>${result.interpretation || 'EXCELLENT - Profil optimal'}</h3>
+            <h3>${result.interpretation}</h3>
         `;
     }
     
