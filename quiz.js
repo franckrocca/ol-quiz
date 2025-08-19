@@ -767,3 +767,15 @@ function bookCall() {
         });
     }
 }
+
+// Exposer les fonctions globalement pour onclick
+window.startQuiz = startQuiz;
+window.selectAnswer = selectAnswer;
+window.saveInputAndNext = saveInputAndNext;
+window.saveDoubleInputAndNext = saveDoubleInputAndNext;
+window.saveMultiSelectAndNext = saveMultiSelectAndNext;
+window.nextQuestion = nextQuestion;
+window.previousQuestion = previousQuestion;
+window.handleInputKeypress = handleInputKeypress;
+window.submitEmail = submitEmail;
+window.bookCall = bookCall;
