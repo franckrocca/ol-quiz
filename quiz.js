@@ -312,10 +312,25 @@ function showWowBreak(wowBreak) {
     `;
     
     if (wowBreak.badge) {
-        html += `<span class="study-badge">📊 ${wowBreak.badge}</span>`;
+        html += `<span class="study-badge">${wowBreak.badge}</span>`;
     }
     
-    if (wowBreak.mainStat) {
+    // Traitement spécial pour le WOW 7% / 93%
+    if (wowBreak.id === 'wow6' && wowBreak.mainStat.includes('7%')) {
+        html += `
+            <div class="wow-percentage-display">
+                <div class="percentage-block">
+                    <div class="percentage-number" style="color: #FF4444;">7%</div>
+                    <div class="percentage-label">Génétique</div>
+                </div>
+                <div style="font-size: 48px; color: #E5E5E7;">|</div>
+                <div class="percentage-block">
+                    <div class="percentage-number" style="color: #01FF00;">93%</div>
+                    <div class="percentage-label">Tes choix</div>
+                </div>
+            </div>
+        `;
+    } else if (wowBreak.mainStat) {
         html += `<div class="wow-stat">${wowBreak.mainStat}</div>`;
     }
     
@@ -331,10 +346,28 @@ function showWowBreak(wowBreak) {
         html += '</ul></div>';
     }
     
+    if (wowBreak.boostMethods) {
+        html += '<div class="wow-stats"><ul>';
+        wowBreak.boostMethods.forEach(method => {
+            html += `<li>${method}</li>`;
+        });
+        html += '</ul></div>';
+    }
+    
+    if (wowBreak.comparison) {
+        html += `<div class="wow-comparison">${wowBreak.comparison}</div>`;
+    }
+    
+    if (wowBreak.solution) {
+        html += `<p style="text-align: center; font-weight: 700; color: var(--accent-green); margin: 25px 0; font-size: 18px;">
+            ${wowBreak.solution}
+        </p>`;
+    }
+    
     if (wowBreak.source) {
         html += `
             <div class="wow-source">
-                Source : ${wowBreak.source}
+                📚 Source : ${wowBreak.source}
             </div>
         `;
     }
@@ -544,10 +577,19 @@ function setupIMCCalculation() {
             }
             
             imcDisplay.innerHTML = `
-                <div style="background: var(--light-gray); padding: 15px; border-radius: 10px; margin-top: 20px;">
-                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Ton IMC :</div>
-                    <div style="font-size: 36px; font-weight: 900; color: ${imcColor};">${imc}</div>
-                    <div style="font-size: 16px; color: ${imcColor}; font-weight: 600;">${imcText}</div>
+                <div style="background: #f5f5f7; padding: 20px; border-radius: 15px; margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="font-size: 14px; color: #86868b;">Ton IMC :</span>
+                        <span style="font-size: 24px; font-weight: 900; color: #000324;">${imc}</span>
+                    </div>
+                    <div style="position: relative; height: 8px; background: linear-gradient(to right, #3498db 0%, #2ecc71 18.5%, #2ecc71 25%, #f39c12 25%, #f39c12 30%, #e74c3c 30%, #e74c3c 100%); border-radius: 4px;">
+                        <div style="position: absolute; top: -8px; left: ${Math.min(Math.max((imc - 15) * 4, 0), 100)}%; transform: translateX(-50%);">
+                            <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #000324;"></div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <span style="font-size: 14px; font-weight: 600; color: ${imcColor};">${imcText} ${imcColor === '#01FF00' ? '✓' : ''}</span>
+                    </div>
                 </div>
             `;
             
@@ -706,6 +748,13 @@ function showResults(result) {
     if (chronoAge) chronoAge.textContent = result.chronologicalAge + ' ans';
     if (bioAge) bioAge.textContent = result.biologicalAge + ' ans';
     
+    // Afficher le message d'âge
+    const ageMessage = document.getElementById('ageMessage');
+    if (ageMessage && result.ageMessage) {
+        ageMessage.textContent = result.ageMessage;
+        ageMessage.style.display = 'block';
+    }
+    
     // Afficher le risque
     const riskElement = document.getElementById('riskLevel');
     if (riskElement) {
@@ -723,12 +772,14 @@ function showResults(result) {
         result.projections.forEach(risk => {
             const li = document.createElement('li');
             li.innerHTML = risk;
-            if (risk.includes('🚨')) {
+            if (risk.includes('🚨') || risk.includes('🆘')) {
                 li.style.color = '#FF4444';
             } else if (risk.includes('⚠️')) {
                 li.style.color = '#FFA500';
             } else if (risk.includes('✅') || risk.includes('🌟')) {
                 li.style.color = '#00CC00';
+            } else if (risk.includes('💡') || risk.includes('🚀')) {
+                li.style.color = '#000324';
             }
             futureRisksList.appendChild(li);
         });
