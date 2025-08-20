@@ -244,6 +244,7 @@ function createDoubleInput(question) {
         `;
     });
     html += `</div>
+        <div id="imc-display" class="imc-display"></div>
         <button class="btn-primary" onclick="saveDoubleInputAndNext('${question.key}')">
             Continuer →
         </button>
@@ -282,18 +283,28 @@ function createMultiSelect(question) {
     return html;
 }
 
-// Créer options simples
+// Créer options simples - CORRIGÉ pour le bug des apostrophes
 function createSingleOptions(question) {
     let html = '<div class="options">';
-    question.options.forEach(option => {
+    question.options.forEach((option, index) => {
+        // Utiliser l'index au lieu de passer la valeur directement pour éviter les problèmes d'apostrophes
         html += `
-            <div class="option" onclick="selectAnswer('${question.key}', '${option}')">
+            <div class="option" onclick="selectAnswerByIndex('${question.key}', ${index})">
                 ${option}
             </div>
         `;
     });
     html += '</div>';
     return html;
+}
+
+// Nouvelle fonction pour sélectionner par index
+function selectAnswerByIndex(key, index) {
+    const question = questions[currentQuestion];
+    if (question && question.options && question.options[index] !== undefined) {
+        answers[key] = question.options[index];
+        nextQuestion();
+    }
 }
 
 // Afficher WOW break
@@ -323,7 +334,7 @@ function showWowBreak(wowBreak) {
                     <div class="percentage-number" style="color: #FF4444;">7%</div>
                     <div class="percentage-label">Génétique</div>
                 </div>
-                <div style="font-size: 48px; color: #E5E5E7;">|</div>
+                <div style="font-size: 40px; color: #E5E5E7;">|</div>
                 <div class="percentage-block">
                     <div class="percentage-number" style="color: #01FF00;">93%</div>
                     <div class="percentage-label">Tes choix</div>
@@ -359,7 +370,7 @@ function showWowBreak(wowBreak) {
     }
     
     if (wowBreak.solution) {
-        html += `<p style="text-align: center; font-weight: 700; color: var(--accent-green); margin: 25px 0; font-size: 18px;">
+        html += `<p style="text-align: center; font-weight: 700; color: var(--accent-green); margin: 20px 0; font-size: 16px;">
             ${wowBreak.solution}
         </p>`;
     }
@@ -540,7 +551,7 @@ function previousQuestion() {
     }
 }
 
-// Setup calcul IMC
+// Setup calcul IMC - AMÉLIORÉ
 function setupIMCCalculation() {
     const weightInput = document.getElementById('weight');
     const heightInput = document.getElementById('height');
@@ -559,36 +570,39 @@ function setupIMCCalculation() {
                 imcDisplay = document.createElement('div');
                 imcDisplay.id = 'imc-display';
                 imcDisplay.className = 'imc-display';
-                weightInput.parentElement.parentElement.appendChild(imcDisplay);
+                const button = document.querySelector('.btn-primary');
+                button.parentElement.insertBefore(imcDisplay, button);
             }
             
-            let imcColor = '#01FF00';
+            let imcColor = '#00CC00'; // Vert plus foncé pour meilleur contraste
             let imcText = 'Poids normal ✓';
             
             if (imc < 18.5) {
-                imcColor = '#FFA500';
+                imcColor = '#FF8C00'; // Orange plus foncé
                 imcText = 'Insuffisance pondérale';
             } else if (imc >= 25 && imc < 30) {
-                imcColor = '#FFA500';
+                imcColor = '#FF8C00';
                 imcText = 'Surpoids';
             } else if (imc >= 30) {
                 imcColor = '#FF4444';
                 imcText = 'Obésité';
             }
             
+            const indicatorPosition = Math.min(Math.max((imc - 15) * 4, 0), 100);
+            
             imcDisplay.innerHTML = `
-                <div style="background: #f5f5f7; padding: 20px; border-radius: 15px; margin-top: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="font-size: 14px; color: #86868b;">Ton IMC :</span>
-                        <span style="font-size: 24px; font-weight: 900; color: #000324;">${imc}</span>
+                <div class="imc-container">
+                    <div class="imc-header">
+                        <span class="imc-label">Ton IMC :</span>
+                        <span class="imc-value">${imc}</span>
                     </div>
-                    <div style="position: relative; height: 8px; background: linear-gradient(to right, #3498db 0%, #2ecc71 18.5%, #2ecc71 25%, #f39c12 25%, #f39c12 30%, #e74c3c 30%, #e74c3c 100%); border-radius: 4px;">
-                        <div style="position: absolute; top: -8px; left: ${Math.min(Math.max((imc - 15) * 4, 0), 100)}%; transform: translateX(-50%);">
-                            <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #000324;"></div>
+                    <div class="imc-bar-container">
+                        <div class="imc-indicator" style="left: ${indicatorPosition}%;">
+                            <div class="imc-arrow"></div>
                         </div>
                     </div>
-                    <div style="text-align: center; margin-top: 10px;">
-                        <span style="font-size: 14px; font-weight: 600; color: ${imcColor};">${imcText} ${imcColor === '#01FF00' ? '✓' : ''}</span>
+                    <div class="imc-status">
+                        <span class="imc-status-text" style="color: ${imcColor};">${imcText}</span>
                     </div>
                 </div>
             `;
@@ -648,6 +662,13 @@ function showEmailScreen() {
 // Soumettre email
 async function submitEmail(event) {
     event.preventDefault();
+    
+    // Validation de la checkbox
+    const consentCheckbox = document.getElementById('consent');
+    if (!consentCheckbox.checked) {
+        alert('Veuillez accepter de recevoir votre score et les conseils personnalisés pour continuer.');
+        return;
+    }
     
     userInfo = {
         firstname: document.getElementById('firstname').value,
@@ -843,6 +864,7 @@ function bookCall() {
 // Exposer TOUTES les fonctions globalement
 window.startQuiz = startQuiz;
 window.selectAnswer = selectAnswer;
+window.selectAnswerByIndex = selectAnswerByIndex;
 window.saveInputAndNext = saveInputAndNext;
 window.saveDoubleInputAndNext = saveDoubleInputAndNext;
 window.saveMultiSelectAndNext = saveMultiSelectAndNext;

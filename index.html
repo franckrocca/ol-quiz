@@ -93,7 +93,14 @@
                     </div>
                     
                     <div class="checkbox-group">
-                        <input type="checkbox" id="consent" class="checkbox" required>
+                        <input 
+                            type="checkbox" 
+                            id="consent" 
+                            class="checkbox" 
+                            required
+                            oninvalid="this.setCustomValidity('Veuillez accepter de recevoir votre score et les conseils personnalisés')"
+                            oninput="this.setCustomValidity('')"
+                        >
                         <label for="consent" class="checkbox-label">
                             J'accepte de recevoir mon score et des conseils santé personnalisés
                         </label>
